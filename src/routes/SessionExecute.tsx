@@ -215,6 +215,26 @@ export function SessionExecuteRoute() {
     }
   }
 
+  /** Pula a série atual sem marcar como completa. Avança pra próxima série
+   *  (ou próximo exercício se for a última do exercício atual). Se for a
+   *  última do treino inteiro, finaliza direto. */
+  function skipSet() {
+    timer.stop()
+    if (current && setIdx < current.sets.length - 1) {
+      setSetIdx(setIdx + 1)
+      setMode('set')
+      return
+    }
+    if (exIdx < drafts.length - 1) {
+      setExIdx(exIdx + 1)
+      setSetIdx(0)
+      setMode('set')
+      return
+    }
+    // Última série do treino → finaliza
+    void finish()
+  }
+
   async function finish() {
     if (!id) return
     setFinishing(true)
@@ -337,7 +357,7 @@ export function SessionExecuteRoute() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto pb-32">
+      <div className="flex-1 overflow-y-auto pb-40">
         {mode === 'set' ? (
           <SetView
             current={current}
@@ -353,6 +373,7 @@ export function SessionExecuteRoute() {
             onUpdateSet={updateCurrentSet}
             onComplete={completeAndRest}
             onAddSet={addSet}
+            onSkipSet={skipSet}
             onSkipExercise={skipExercise}
             onJumpToSet={setSetIdx}
           />
@@ -403,6 +424,7 @@ function SetView({
   onUpdateSet,
   onComplete,
   onAddSet,
+  onSkipSet,
   onSkipExercise,
   onJumpToSet,
 }: {
@@ -416,6 +438,7 @@ function SetView({
   onUpdateSet: (patch: Partial<SetDraft>) => void
   onComplete: () => void
   onAddSet: () => void
+  onSkipSet: () => void
   onSkipExercise: () => void
   onJumpToSet: (idx: number) => void
 }) {
@@ -588,16 +611,34 @@ function SetView({
 
       {/* Botões grandes */}
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 backdrop-blur safe-bottom">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 p-3">
-          <Button variant="ghost" onClick={onSkipExercise} className="flex-1">
-            <SkipForward className="size-4" />
-            Pular exerc.
-          </Button>
+        <div className="mx-auto max-w-2xl p-3">
+          {/* Linha 1: ações secundárias (pular) — duas opções claras */}
+          <div className="mb-2 flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSkipSet}
+              className="flex-1"
+            >
+              <SkipForward className="size-3.5" />
+              {isCardio ? 'Pular intervalo' : 'Pular série'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSkipExercise}
+              className="flex-1"
+            >
+              <SkipForward className="size-3.5" />
+              Pular exercício
+            </Button>
+          </div>
+          {/* Linha 2: ação primária (concluir) — full width pra ficar fácil de tocar */}
           <Button
             onClick={onComplete}
             disabled={!canComplete}
-            className="flex-[2]"
             size="lg"
+            className="w-full"
           >
             <Check className="size-4" />
             {isCardio ? 'Concluir intervalo' : 'Concluir série'}
