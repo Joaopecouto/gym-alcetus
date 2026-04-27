@@ -4,7 +4,7 @@
 # =============================================================================
 #  Pré-requisito:
 #    1. DNS apontando pro IP da VPS (registro A no Cloudflare/Hostinger)
-#    2. App já rodando em 127.0.0.1:3000 (após hostinger-app.sh)
+#    2. App já rodando em 127.0.0.1:3010 (após hostinger-app.sh)
 #
 #  Uso:
 #    bash deploy/hostinger-tls.sh seu-dominio.com seu@email.com

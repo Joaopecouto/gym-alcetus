@@ -90,9 +90,9 @@ docker compose ps
 
 echo
 echo "==> Health check:"
-curl -fsS http://127.0.0.1:3000/api/health || echo "  (health falhou — confira logs com: docker compose logs -f)"
+curl -fsS http://127.0.0.1:3010/api/health || echo "  (health falhou — confira logs com: docker compose logs -f)"
 
 echo
-echo "Deploy OK. App rodando em http://127.0.0.1:3000 (interno)."
+echo "Deploy OK. App rodando em http://127.0.0.1:3010 (interno)."
 echo "Próximo: configurar nginx ou Cloudflare Tunnel pra expor com HTTPS."
 echo "Veja deploy/nginx-gym-alcetus.conf e deploy/hostinger-tls.sh."

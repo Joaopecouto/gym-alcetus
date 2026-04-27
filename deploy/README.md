@@ -36,7 +36,7 @@ Ele vai pedir:
 
 E vai gerar `JWT_SECRET` automaticamente. Em seguida `docker compose build && up -d`.
 
-App fica rodando em `127.0.0.1:3000` (interno, sem TLS).
+App fica rodando em `127.0.0.1:3010` (interno, sem TLS).
 
 ### 3. nginx + HTTPS
 
