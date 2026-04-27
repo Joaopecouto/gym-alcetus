@@ -133,8 +133,17 @@ export function ExerciseDetailRoute() {
             <Button
               variant="destructive"
               onClick={async () => {
-                await deleteEx.mutateAsync(exercise.id)
-                navigate('/library')
+                try {
+                  await deleteEx.mutateAsync(exercise.id)
+                  setConfirmDel(false)
+                  navigate('/library')
+                } catch (e) {
+                  console.error('Falha ao apagar exercício:', e)
+                  alert(
+                    'Não consegui apagar: ' +
+                      (e instanceof Error ? e.message : String(e)),
+                  )
+                }
               }}
             >
               Apagar

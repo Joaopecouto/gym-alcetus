@@ -102,8 +102,17 @@ export function PlanEditorRoute() {
 
   async function doDelete() {
     if (!id) return
-    await del.mutateAsync(id)
-    navigate('/plans')
+    try {
+      await del.mutateAsync(id)
+      setConfirmDelete(false)
+      navigate('/plans')
+    } catch (e) {
+      console.error('Falha ao apagar plano:', e)
+      alert(
+        'Não consegui apagar: ' +
+          (e instanceof Error ? e.message : String(e)),
+      )
+    }
   }
 
   return (

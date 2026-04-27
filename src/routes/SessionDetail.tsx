@@ -31,7 +31,14 @@ export function SessionDetailRoute() {
     mutationFn: () => api.deleteSession(id!),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.sessions })
+      setConfirmDel(false)
       navigate('/history')
+    },
+    onError: (e) => {
+      console.error('Falha ao apagar sessão:', e)
+      alert(
+        'Não consegui apagar: ' + (e instanceof Error ? e.message : String(e)),
+      )
     },
   })
 

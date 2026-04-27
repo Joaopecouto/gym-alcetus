@@ -163,30 +163,34 @@ export function SessionExecuteRoute() {
     )
   }
 
-  /** Marca a série atual como completa e vai pra tela de descanso (ou próximo exercício se foi a última e descanso = 0). */
+  /** É a última série do último exercício? Usado pra mudar UI/comportamento no fim. */
+  function isLastSetOverall(): boolean {
+    return (
+      !!current &&
+      setIdx === current.sets.length - 1 &&
+      exIdx === drafts.length - 1
+    )
+  }
+
+  /** Marca a série atual como completa e vai pra tela de descanso. No fim do treino,
+   *  ainda vai pra tela de descanso (RestView) que mostra "Finalizar treino". */
   function completeAndRest() {
     updateCurrentSet({
       completed: true,
       completedAt: Date.now(),
     })
-    // É a última série deste exercício?
-    if (current && setIdx === current.sets.length - 1) {
-      // Vai pro próximo exercício direto se houver
-      if (exIdx < drafts.length - 1) {
-        timer.start(current.restSeconds)
-        setMode('rest')
-      } else {
-        // último exercício, último set → fica na tela mostrando estado completo
-        setMode('set')
-      }
-    } else {
-      timer.start(current.restSeconds)
-      setMode('rest')
-    }
+    // Vai pra tela de descanso/finalização — RestView lida com last-set-overall.
+    timer.start(current.restSeconds || 0)
+    setMode('rest')
   }
 
   function advanceFromRest() {
     timer.stop()
+    if (isLastSetOverall()) {
+      // Acabou o treino → finaliza
+      void finish()
+      return
+    }
     setMode('set')
     if (current && setIdx < current.sets.length - 1) {
       setSetIdx(setIdx + 1)
@@ -354,6 +358,8 @@ export function SessionExecuteRoute() {
             nextExercise={nextExercise ?? null}
             nextSetIdx={nextSetIdx}
             isLastSetOfExercise={setIdx === current.sets.length - 1}
+            isWorkoutEnd={isLastSetOverall()}
+            finishing={finishing}
             onSkip={advanceFromRest}
           />
         )}
@@ -617,6 +623,8 @@ function RestView({
   nextExercise,
   nextSetIdx,
   isLastSetOfExercise,
+  isWorkoutEnd,
+  finishing,
   onSkip,
 }: {
   timer: ReturnType<typeof useRestTimer>
@@ -625,6 +633,8 @@ function RestView({
   nextExercise: Exercise | null
   nextSetIdx: number
   isLastSetOfExercise: boolean
+  isWorkoutEnd: boolean
+  finishing: boolean
   onSkip: () => void
 }) {
   const finished = timer.remaining <= 0
@@ -635,38 +645,53 @@ function RestView({
           className="text-xs uppercase tracking-wider"
           style={{ color: muscleColor }}
         >
-          Descansando
+          {isWorkoutEnd ? 'Treino concluído!' : 'Descansando'}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Próxima:{' '}
-          {isLastSetOfExercise && nextExercise && nextExercise !== currentExercise
-            ? nextExercise.name
-            : `${currentExercise.name} · série ${nextSetIdx + 1}`}
+          {isWorkoutEnd
+            ? 'Última série marcada. Toque "Finalizar treino" pra salvar no histórico.'
+            : isLastSetOfExercise &&
+                nextExercise &&
+                nextExercise !== currentExercise
+              ? `Próxima: ${nextExercise.name}`
+              : `Próxima: ${currentExercise.name} · série ${nextSetIdx + 1}`}
         </p>
       </div>
 
-      <RestRing timer={timer} muscleColor={muscleColor} />
-
-      <div className="mt-6 flex items-center justify-center gap-2">
-        <button
-          type="button"
-          onClick={() => timer.adjust(-15)}
-          className="inline-flex h-11 items-center gap-1 rounded-full border border-border bg-card px-4 text-sm font-medium hover:bg-accent"
+      {isWorkoutEnd ? (
+        <div
+          className="mt-8 flex size-56 items-center justify-center rounded-full border-8 text-6xl"
+          style={{ borderColor: muscleColor, color: muscleColor }}
+          aria-hidden="true"
         >
-          <Minus className="size-4" />
-          15s
-        </button>
-        <button
-          type="button"
-          onClick={() => timer.adjust(15)}
-          className="inline-flex h-11 items-center gap-1 rounded-full border border-border bg-card px-4 text-sm font-medium hover:bg-accent"
-        >
-          <Plus className="size-4" />
-          15s
-        </button>
-      </div>
+          ✓
+        </div>
+      ) : (
+        <RestRing timer={timer} muscleColor={muscleColor} />
+      )}
 
-      {nextExercise ? (
+      {!isWorkoutEnd ? (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => timer.adjust(-15)}
+            className="inline-flex h-11 items-center gap-1 rounded-full border border-border bg-card px-4 text-sm font-medium hover:bg-accent"
+          >
+            <Minus className="size-4" />
+            15s
+          </button>
+          <button
+            type="button"
+            onClick={() => timer.adjust(15)}
+            className="inline-flex h-11 items-center gap-1 rounded-full border border-border bg-card px-4 text-sm font-medium hover:bg-accent"
+          >
+            <Plus className="size-4" />
+            15s
+          </button>
+        </div>
+      ) : null}
+
+      {nextExercise && !isWorkoutEnd ? (
         <div className="mt-8 w-full max-w-md rounded-2xl border border-border bg-card p-3">
           <div className="flex items-center gap-3">
             <ExerciseImage exercise={nextExercise} size="md" />
@@ -682,22 +707,32 @@ function RestView({
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 backdrop-blur safe-bottom">
         <div className="mx-auto flex max-w-2xl items-center gap-2 p-3">
-          <Button
-            variant="ghost"
-            onClick={onSkip}
-            className="flex-1"
-          >
-            <SkipForward className="size-4" />
-            Pular descanso
-          </Button>
-          <Button
-            onClick={onSkip}
-            className={cn('flex-[2]', finished && 'animate-pulse')}
-            size="lg"
-          >
-            <ChevronRight className="size-4" />
-            {finished ? 'Próxima série' : 'Já estou pronto'}
-          </Button>
+          {isWorkoutEnd ? (
+            <Button
+              onClick={onSkip}
+              className="w-full animate-pulse"
+              size="lg"
+              disabled={finishing}
+            >
+              <Flag className="size-4" />
+              {finishing ? 'Salvando…' : 'Finalizar treino'}
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={onSkip} className="flex-1">
+                <SkipForward className="size-4" />
+                Pular descanso
+              </Button>
+              <Button
+                onClick={onSkip}
+                className={cn('flex-[2]', finished && 'animate-pulse')}
+                size="lg"
+              >
+                <ChevronRight className="size-4" />
+                {finished ? 'Próxima série' : 'Já estou pronto'}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

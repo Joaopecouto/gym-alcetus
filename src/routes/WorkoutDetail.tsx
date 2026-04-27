@@ -55,8 +55,17 @@ export function WorkoutDetailRoute() {
   }
 
   async function doDelete() {
-    await deleteW.mutateAsync(w.id)
-    navigate('/workouts')
+    try {
+      await deleteW.mutateAsync(w.id)
+      setConfirmDel(false)
+      navigate('/workouts')
+    } catch (e) {
+      console.error('Falha ao apagar treino:', e)
+      alert(
+        'Não consegui apagar: ' +
+          (e instanceof Error ? e.message : String(e)),
+      )
+    }
   }
 
   return (
