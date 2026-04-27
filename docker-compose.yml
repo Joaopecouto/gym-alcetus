@@ -16,6 +16,12 @@ services:
       - "127.0.0.1:3010:3000"
     volumes:
       - gym-alcetus-data:/data
+    networks:
+      # default: rede do compose (gym-alcetus_default), criada automaticamente.
+      # easypanel: rede external do Traefik do EasyPanel — sem isso, o nome
+      # `gym-alcetus` não resolve dentro do Traefik e dá 502 Bad Gateway.
+      - default
+      - easypanel
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
@@ -25,3 +31,7 @@ services:
 
 volumes:
   gym-alcetus-data:
+
+networks:
+  easypanel:
+    external: true
