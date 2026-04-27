@@ -24,17 +24,38 @@ export class ApiError extends Error {
   }
 }
 
+/** Formata um erro pra exibir ao usuário (alert/toast) com info útil pra debug. */
+export function describeError(e: unknown): string {
+  if (e instanceof ApiError) {
+    const payloadStr =
+      typeof e.payload === 'string'
+        ? e.payload
+        : e.payload !== undefined
+          ? JSON.stringify(e.payload)
+          : ''
+    return `[${e.status}] ${e.message}${payloadStr ? `\n${payloadStr}` : ''}`
+  }
+  if (e instanceof Error) return e.message
+  return String(e)
+}
+
 async function request<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  // Content-Type só faz sentido quando tem body — Fastify rejeita
+  // requests com 'application/json' header e body vazio (FST_ERR_CTP_EMPTY_JSON_BODY).
+  const headers: Record<string, string> = {
+    ...((init.headers as Record<string, string>) ?? {}),
+  }
+  if (init.body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json'
+  }
+
   const res = await fetch(path, {
     ...init,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
+    headers,
   })
 
   if (!res.ok) {

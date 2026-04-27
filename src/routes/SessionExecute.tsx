@@ -23,6 +23,7 @@ import { estimate1RM } from '@/lib/calc-1rm'
 import { cn } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query'
+import { pickWorkoutEndMessage } from '@/lib/motivational'
 import { EQUIPMENT_LABELS, type Exercise, MUSCLE_COLORS } from '@/types'
 
 interface SetDraft {
@@ -360,6 +361,7 @@ export function SessionExecuteRoute() {
             isLastSetOfExercise={setIdx === current.sets.length - 1}
             isWorkoutEnd={isLastSetOverall()}
             finishing={finishing}
+            sessionId={id ?? ''}
             onSkip={advanceFromRest}
           />
         )}
@@ -625,6 +627,7 @@ function RestView({
   isLastSetOfExercise,
   isWorkoutEnd,
   finishing,
+  sessionId,
   onSkip,
 }: {
   timer: ReturnType<typeof useRestTimer>
@@ -635,9 +638,13 @@ function RestView({
   isLastSetOfExercise: boolean
   isWorkoutEnd: boolean
   finishing: boolean
+  sessionId: string
   onSkip: () => void
 }) {
   const finished = timer.remaining <= 0
+  // Mensagem motivacional estável-pelo-id-da-sessão (mesma sessão = mesma msg).
+  const endMsg = isWorkoutEnd ? pickWorkoutEndMessage(sessionId) : null
+
   return (
     <div className="flex h-full flex-col items-center justify-start px-4 pt-6">
       <div className="w-full text-center">
@@ -647,15 +654,28 @@ function RestView({
         >
           {isWorkoutEnd ? 'Treino concluído!' : 'Descansando'}
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {isWorkoutEnd
-            ? 'Última série marcada. Toque "Finalizar treino" pra salvar no histórico.'
-            : isLastSetOfExercise &&
-                nextExercise &&
-                nextExercise !== currentExercise
+        {isWorkoutEnd && endMsg ? (
+          <>
+            <p className="mt-2 text-lg font-semibold">{endMsg.praise}</p>
+            <p
+              className="mt-0.5 text-sm font-medium"
+              style={{ color: muscleColor }}
+            >
+              {endMsg.frango}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Toque "Finalizar treino" pra salvar no histórico.
+            </p>
+          </>
+        ) : (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isLastSetOfExercise &&
+            nextExercise &&
+            nextExercise !== currentExercise
               ? `Próxima: ${nextExercise.name}`
               : `Próxima: ${currentExercise.name} · série ${nextSetIdx + 1}`}
-        </p>
+          </p>
+        )}
       </div>
 
       {isWorkoutEnd ? (

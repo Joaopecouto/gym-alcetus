@@ -12,7 +12,7 @@ import {
   useExercises,
   useMuscleGroups,
 } from '@/features/exercises/queries'
-import { api } from '@/lib/api'
+import { api, describeError } from '@/lib/api'
 import { estimateWorkoutVolume, formatVolume } from '@/lib/workout-volume'
 import { EQUIPMENT_LABELS } from '@/types'
 
@@ -61,10 +61,7 @@ export function WorkoutDetailRoute() {
       navigate('/workouts')
     } catch (e) {
       console.error('Falha ao apagar treino:', e)
-      alert(
-        'Não consegui apagar: ' +
-          (e instanceof Error ? e.message : String(e)),
-      )
+      alert('Não consegui apagar:\n\n' + describeError(e))
     }
   }
 

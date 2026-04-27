@@ -14,6 +14,7 @@ import {
 } from '@/features/exercises/queries'
 import { api } from '@/lib/api'
 import { queryKeys } from '@/lib/query'
+import { pickWorkoutEndMessage } from '@/lib/motivational'
 import { MUSCLE_COLORS } from '@/types'
 import { estimate1RM } from '@/lib/calc-1rm'
 
@@ -34,11 +35,10 @@ export function SessionDetailRoute() {
       setConfirmDel(false)
       navigate('/history')
     },
-    onError: (e) => {
+    onError: async (e) => {
       console.error('Falha ao apagar sessão:', e)
-      alert(
-        'Não consegui apagar: ' + (e instanceof Error ? e.message : String(e)),
-      )
+      const { describeError } = await import('@/lib/api')
+      alert('Não consegui apagar:\n\n' + describeError(e))
     },
   })
 
@@ -91,6 +91,19 @@ export function SessionDetailRoute() {
         <p className="mt-1 text-sm text-muted-foreground">
           {format(date, "EEEE, d 'de' MMMM 'de' y · HH:mm", { locale: ptBR })}
         </p>
+
+        {/* Mensagem motivacional */}
+        {(() => {
+          const msg = pickWorkoutEndMessage(s.id)
+          return (
+            <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+              <p className="text-base font-semibold">{msg.praise}</p>
+              <p className="mt-0.5 text-sm font-medium text-primary">
+                {msg.frango}
+              </p>
+            </div>
+          )
+        })()}
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <div className="rounded-lg border border-border bg-card p-3">

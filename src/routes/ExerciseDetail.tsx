@@ -139,10 +139,8 @@ export function ExerciseDetailRoute() {
                   navigate('/library')
                 } catch (e) {
                   console.error('Falha ao apagar exercício:', e)
-                  alert(
-                    'Não consegui apagar: ' +
-                      (e instanceof Error ? e.message : String(e)),
-                  )
+                  const { describeError } = await import('@/lib/api')
+                  alert('Não consegui apagar:\n\n' + describeError(e))
                 }
               }}
             >
