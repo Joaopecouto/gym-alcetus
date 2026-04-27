@@ -57,7 +57,8 @@ EOF
 
 ln -sf "$CONF_DST" "$CONF_LINK"
 nginx -t
-systemctl reload nginx
+systemctl restart nginx
+systemctl enable nginx >/dev/null 2>&1 || true
 
 # -----------------------------------------------------------------------------
 # Etapa 2: certbot pega o cert TLS (modo standalone via webroot)
@@ -77,7 +78,8 @@ certbot certonly \
 echo "==> Aplicando config final (HTTP→HTTPS + reverse proxy)"
 sed "s|SEU_DOMINIO|$DOMAIN|g" "$CONF_FINAL_SRC" > "$CONF_DST"
 nginx -t
-systemctl reload nginx
+systemctl restart nginx
+systemctl enable nginx >/dev/null 2>&1 || true
 
 # -----------------------------------------------------------------------------
 # Etapa 4: renovação automática (já vem habilitada via systemd timer do certbot)
