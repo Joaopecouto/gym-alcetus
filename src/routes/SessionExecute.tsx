@@ -173,14 +173,19 @@ export function SessionExecuteRoute() {
     )
   }
 
-  /** Marca a série atual como completa e vai pra tela de descanso. No fim do treino,
-   *  ainda vai pra tela de descanso (RestView) que mostra "Finalizar treino". */
+  /** Marca a série atual como completa. Se for a última do treino, finaliza
+   *  direto e vai pro SessionDetail (com motivacional, heatmap, exercícios) —
+   *  pulamos o RestView de "treino concluído" porque o detalhe já tem essa UI
+   *  bonita. Caso contrário, dispara o timer de descanso. */
   function completeAndRest() {
     updateCurrentSet({
       completed: true,
       completedAt: Date.now(),
     })
-    // Vai pra tela de descanso/finalização — RestView lida com last-set-overall.
+    if (isLastSetOverall()) {
+      void finish()
+      return
+    }
     timer.start(current.restSeconds || 0)
     setMode('rest')
   }
