@@ -3,6 +3,7 @@ import { and, eq, isNull, or } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { db, schema } from '../db/client.js'
+import { WORKOUT_TEMPLATES } from '../db/seed-data.js'
 import { requireAuth } from '../auth/middleware.js'
 
 const CustomExerciseBody = z.object({
@@ -20,6 +21,11 @@ export async function catalogRoutes(app: FastifyInstance) {
   app.get('/api/muscle-groups', async () => {
     const rows = await db.select().from(schema.muscleGroups)
     return { muscleGroups: rows }
+  })
+
+  // Lista templates pré-prontos (estático, vem do seed-data)
+  app.get('/api/workout-templates', async () => {
+    return { templates: WORKOUT_TEMPLATES }
   })
 
   // Lista exercícios visíveis pro usuário logado:

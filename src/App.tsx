@@ -3,9 +3,16 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import { AppShell } from '@/components/layout/AppShell'
 import { HomeRoute } from '@/routes/Home'
 import { LibraryRoute } from '@/routes/Library'
+import { ExerciseDetailRoute } from '@/routes/ExerciseDetail'
+import { ExerciseNewRoute } from '@/routes/ExerciseNew'
 import { WorkoutsRoute } from '@/routes/Workouts'
+import { WorkoutDetailRoute } from '@/routes/WorkoutDetail'
+import { WorkoutEditorRoute } from '@/routes/WorkoutEditor'
 import { HistoryRoute } from '@/routes/History'
+import { SessionDetailRoute } from '@/routes/SessionDetail'
+import { SessionExecuteRoute } from '@/routes/SessionExecute'
 import { ProgressRoute } from '@/routes/Progress'
+import { SettingsRoute } from '@/routes/Settings'
 import { NotFoundRoute } from '@/routes/NotFound'
 import { OnboardingRoute } from '@/routes/onboarding/Onboarding'
 import { LoginRoute } from '@/routes/Login'
@@ -35,6 +42,18 @@ function AuthedRoutes() {
   return (
     <Routes>
       <Route path="/onboarding" element={<OnboardingRoute />} />
+
+      {/* Rotas fullscreen (sem tab bar) */}
+      <Route path="/library/new" element={<ExerciseNewRoute />} />
+      <Route path="/library/:id" element={<ExerciseDetailRoute />} />
+      <Route path="/workouts/new" element={<WorkoutEditorRoute />} />
+      <Route path="/workouts/:id/edit" element={<WorkoutEditorRoute />} />
+      <Route path="/workouts/:id" element={<WorkoutDetailRoute />} />
+      <Route path="/history/:id" element={<SessionDetailRoute />} />
+      <Route path="/session/:id" element={<SessionExecuteRoute />} />
+      <Route path="/settings" element={<SettingsRoute />} />
+
+      {/* Rotas com tab bar */}
       <Route element={<AppShell />}>
         <Route index element={<HomeRoute />} />
         <Route path="/library" element={<LibraryRoute />} />

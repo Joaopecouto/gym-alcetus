@@ -5,6 +5,8 @@ import type {
   Session,
   SessionWithSets,
   User,
+  WorkoutInput,
+  WorkoutTemplate,
   WorkoutWithExercises,
 } from '@/types'
 
@@ -120,6 +122,29 @@ export const api = {
     )
     return workout
   },
+  async createWorkout(payload: WorkoutInput): Promise<WorkoutWithExercises> {
+    const { workout } = await request<{ workout: WorkoutWithExercises }>(
+      '/api/workouts',
+      { method: 'POST', body: JSON.stringify(payload) },
+    )
+    return workout
+  },
+  async updateWorkout(id: string, payload: WorkoutInput) {
+    const { workout } = await request<{ workout: WorkoutWithExercises }>(
+      `/api/workouts/${id}`,
+      { method: 'PUT', body: JSON.stringify(payload) },
+    )
+    return workout
+  },
+  deleteWorkout(id: string) {
+    return request<{ ok: true }>(`/api/workouts/${id}`, { method: 'DELETE' })
+  },
+  async listWorkoutTemplates(): Promise<WorkoutTemplate[]> {
+    const { templates } = await request<{ templates: WorkoutTemplate[] }>(
+      '/api/workout-templates',
+    )
+    return templates
+  },
 
   // ----- sessions -----
   async listSessions(): Promise<Session[]> {
@@ -134,4 +159,36 @@ export const api = {
     )
     return session
   },
+  async startSession(workoutId: string, planId?: string | null): Promise<string> {
+    const { id } = await request<{ id: string }>('/api/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ workoutId, planId }),
+    })
+    return id
+  },
+  finishSession(id: string, payload: FinishSessionPayload) {
+    return request<{ ok: true }>(`/api/sessions/${id}/finish`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    })
+  },
+  deleteSession(id: string) {
+    return request<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' })
+  },
+}
+
+interface FinishSessionPayload {
+  finishedAt: number
+  durationSeconds: number
+  totalVolumeKg: number
+  notes: string
+  sets: Array<{
+    exerciseId: string
+    setNumber: number
+    weightKg: number
+    reps: number
+    rpe?: number | null
+    completed: boolean
+    completedAt?: number | null
+  }>
 }

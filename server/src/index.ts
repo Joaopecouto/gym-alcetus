@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import Fastify from 'fastify'
 import fastifyCookie from '@fastify/cookie'
 import fastifyStatic from '@fastify/static'
@@ -12,6 +13,7 @@ import { meRoutes } from './routes/me.js'
 import { catalogRoutes } from './routes/catalog.js'
 import { workoutRoutes } from './routes/workouts.js'
 import { sessionRoutes } from './routes/sessions.js'
+import { devRoutes } from './routes/dev.js'
 
 const app = Fastify({
   logger: {
@@ -71,6 +73,11 @@ await app.register(meRoutes)
 await app.register(catalogRoutes)
 await app.register(workoutRoutes)
 await app.register(sessionRoutes)
+
+if (!isProd()) {
+  app.log.warn('NODE_ENV != production — registrando /api/dev/bypass (NÃO use em prod)')
+  await app.register(devRoutes)
+}
 
 app.get('/api/health', async () => ({ ok: true, ts: Date.now() }))
 

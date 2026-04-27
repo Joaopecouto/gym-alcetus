@@ -82,6 +82,36 @@ export interface WorkoutWithExercises extends Workout {
   exercises: WorkoutExercise[]
 }
 
+export interface WorkoutInput {
+  name: string
+  mode: WorkoutMode
+  color?: string | null
+  notes?: string
+  exercises: Array<{
+    exerciseId: string
+    setsTarget: number
+    repsMin: number
+    repsMax: number
+    restSeconds: number
+    weightTargetKg?: number | null
+    notes?: string
+  }>
+}
+
+export interface WorkoutTemplate {
+  id: string
+  name: string
+  mode: WorkoutMode
+  description: string
+  exercises: Array<{
+    exerciseId: string
+    setsTarget: number
+    repsMin: number
+    repsMax: number
+    restSeconds: number
+  }>
+}
+
 export interface Session {
   id: string
   userId: string

@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { closeDb, runMigrations } from './client.js'
 
 console.log('Rodando migrations...')

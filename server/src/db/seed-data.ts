@@ -91,3 +91,105 @@ export const EXERCISES: SeedExercise[] = [
   { id: 'ex-plank', name: 'Prancha', primaryMuscle: 'abs', secondaryMuscles: ['shoulders', 'glutes'], equipment: 'bodyweight', difficulty: 'beginner', instructions: 'Antebraços e ponta dos pés no chão, corpo reto. Mantenha a posição contraindo abdômen e glúteos.' },
   { id: 'ex-cable-crunch', name: 'Abdominal na polia', primaryMuscle: 'abs', secondaryMuscles: [], equipment: 'cable', difficulty: 'intermediate', instructions: 'Ajoelhado de frente para a polia alta, corda atrás da cabeça. Flexione o tronco contraindo o abdômen.' },
 ]
+
+export interface SeedWorkoutTemplate {
+  id: string
+  name: string
+  mode: 'hypertrophy' | 'strength'
+  description: string
+  exercises: Array<{
+    exerciseId: string
+    setsTarget: number
+    repsMin: number
+    repsMax: number
+    restSeconds: number
+  }>
+}
+
+const HYP = { setsTarget: 4, repsMin: 8, repsMax: 12, restSeconds: 75 }
+const STR = { setsTarget: 5, repsMin: 3, repsMax: 6, restSeconds: 180 }
+
+export const WORKOUT_TEMPLATES: SeedWorkoutTemplate[] = [
+  {
+    id: 'tpl-fullbody-hyper',
+    name: 'Full Body — Hipertrofia',
+    mode: 'hypertrophy',
+    description: 'Treino completo, ideal para 3x/semana.',
+    exercises: [
+      { exerciseId: 'ex-squat', ...HYP },
+      { exerciseId: 'ex-bench-press', ...HYP },
+      { exerciseId: 'ex-bent-over-row', ...HYP },
+      { exerciseId: 'ex-overhead-press', ...HYP },
+      { exerciseId: 'ex-leg-curl', ...HYP },
+      { exerciseId: 'ex-barbell-curl', ...HYP },
+      { exerciseId: 'ex-tri-pushdown', ...HYP },
+    ],
+  },
+  {
+    id: 'tpl-push',
+    name: 'Push (Peito/Ombro/Tríceps)',
+    mode: 'hypertrophy',
+    description: 'Empurrões: peito, ombros e tríceps.',
+    exercises: [
+      { exerciseId: 'ex-bench-press', ...HYP },
+      { exerciseId: 'ex-incline-db-press', ...HYP },
+      { exerciseId: 'ex-db-shoulder-press', ...HYP },
+      { exerciseId: 'ex-lateral-raise', ...HYP },
+      { exerciseId: 'ex-tri-pushdown', ...HYP },
+      { exerciseId: 'ex-tri-skullcrusher', ...HYP },
+    ],
+  },
+  {
+    id: 'tpl-pull',
+    name: 'Pull (Costas/Bíceps)',
+    mode: 'hypertrophy',
+    description: 'Puxões: costas, trapézio e bíceps.',
+    exercises: [
+      { exerciseId: 'ex-pullup', setsTarget: 3, repsMin: 6, repsMax: 10, restSeconds: 90 },
+      { exerciseId: 'ex-bent-over-row', ...HYP },
+      { exerciseId: 'ex-lat-pulldown', ...HYP },
+      { exerciseId: 'ex-seated-row', ...HYP },
+      { exerciseId: 'ex-shrug', ...HYP },
+      { exerciseId: 'ex-barbell-curl', ...HYP },
+      { exerciseId: 'ex-hammer-curl', ...HYP },
+    ],
+  },
+  {
+    id: 'tpl-legs',
+    name: 'Legs (Pernas)',
+    mode: 'hypertrophy',
+    description: 'Quadríceps, posteriores, glúteos e panturrilhas.',
+    exercises: [
+      { exerciseId: 'ex-squat', ...HYP },
+      { exerciseId: 'ex-leg-press', ...HYP },
+      { exerciseId: 'ex-stiff', ...HYP },
+      { exerciseId: 'ex-leg-curl', ...HYP },
+      { exerciseId: 'ex-leg-extension', ...HYP },
+      { exerciseId: 'ex-calf-standing', setsTarget: 4, repsMin: 12, repsMax: 20, restSeconds: 60 },
+    ],
+  },
+  {
+    id: 'tpl-strength-upper',
+    name: 'Força — Superior',
+    mode: 'strength',
+    description: 'Volume baixo, carga alta. Foco em supino, remada, militar.',
+    exercises: [
+      { exerciseId: 'ex-bench-press', ...STR },
+      { exerciseId: 'ex-bent-over-row', ...STR },
+      { exerciseId: 'ex-overhead-press', ...STR },
+      { exerciseId: 'ex-pullup', ...STR },
+    ],
+  },
+  {
+    id: 'tpl-strength-lower',
+    name: 'Força — Inferior',
+    mode: 'strength',
+    description: 'Agachamento, terra e variações pesadas.',
+    exercises: [
+      { exerciseId: 'ex-squat', ...STR },
+      { exerciseId: 'ex-deadlift', setsTarget: 4, repsMin: 3, repsMax: 5, restSeconds: 240 },
+      { exerciseId: 'ex-hip-thrust', ...STR },
+      { exerciseId: 'ex-bulgarian', setsTarget: 3, repsMin: 6, repsMax: 8, restSeconds: 120 },
+    ],
+  },
+]
