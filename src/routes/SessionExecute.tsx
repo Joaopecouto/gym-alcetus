@@ -661,7 +661,7 @@ function RestView({
               className="mt-0.5 text-sm font-medium"
               style={{ color: muscleColor }}
             >
-              {endMsg.frango}
+              {endMsg.closer}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
               Toque "Finalizar treino" pra salvar no histórico.

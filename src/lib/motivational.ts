@@ -1,50 +1,61 @@
 /**
- * Mensagens motivacionais e variações de "X% menos frango".
- * Usadas nas telas de finalização de treino e detalhe de sessão pra
- * dar uma cobrança levinha + recompensa simbólica.
- *
- * `pickByDate` retorna uma escolha estável-no-dia (varia entre dias mas
- * é a mesma pro mesmo dia/usuário). `pickRandom` puxa qualquer uma.
+ * Mensagens motivacionais cômicas pra exibir no fim de um treino.
+ * Combo: PRAISE (título) + CLOSER (subtítulo).
+ * Escolhidas de forma estável pelo id da sessão (mesma sessão → mesma combo).
  */
 
 export const PRAISES: string[] = [
-  'Treino monstro, em! 💪',
-  'Tu é fera, mandou bem demais!',
-  'Bombou demais hoje!',
-  'Que treinão sensacional!',
-  'Garras de fora, hein!',
-  'Treino brabo, finalizado.',
-  'Vai quebrando a barra, leão!',
-  'Saiu com tudo dessa hoje.',
-  'Top demais, segue assim.',
-  'Performance digna de capa de revista.',
-  'Tirou onda no treino hoje.',
-  'Treino fechado com chave de ouro.',
-  'Mandou ver, sem moleza.',
-  'Cada série, um passo a mais.',
-  'Suor bem investido, parabéns.',
-  'Tu não tava de brincadeira hoje.',
-  'Que disciplina, irmão.',
-  'Foco total. Resultado vindo.',
+  'Bora monstrão, mais 1%.',
+  'Saiu da academia que nem o Hulk com sono.',
+  'Treinão. Pode pedir o açaí.',
+  'Hoje o ferro pediu pelo amor de Deus.',
+  'Hoje fez o Schwarzenegger chorar de inveja.',
+  'O whey agradece os serviços prestados.',
+  'Tá saindo do casulo, marombinha.',
+  'O espelho da academia te ama hoje.',
+  'Treinou que nem o pai mandou.',
+  'Saiu igual leão. Voltou cantando que nem passarinho.',
+  'A barra tá pedindo pelos pais.',
+  'Tô orgulhoso. Vai pra cama logo.',
+  'Já pode postar foto no story (sem flexionar, ok).',
+  'Treinou tipo Deus tivesse te vendo. (E tava.)',
+  'Hoje tu colocou o gym contra a parede.',
+  'Reza pra cama te aguentar.',
+  'Bora postar "just did it".',
+  'Mais um pro currículo de monstrão.',
+  'Quem te viu, quem te vê.',
+  'Tu mandou o gym pra terapia.',
+  'O treino chorou hoje.',
+  'Acabou o treino. Acabou o orgulho do gym também.',
+  'Já avisou o mercado pra dobrar o estoque de ovo?',
 ]
 
-export const FRANGO_LINES: string[] = [
-  '1% menos frango.',
-  '1% mais shape.',
-  '1% mais marrento.',
-  '1% mais leão da serra.',
-  '1% menos magrelo.',
-  '1% mais gigante.',
-  '1% mais GMI ativado.',
-  '1% mais pump.',
-  '1% mais máquina.',
-  '1% mais firme.',
-  '1% mais musculoso.',
-  '1% menos peninha.',
-  '1% mais hipertrofia.',
-  '1% mais cresceu.',
-  'Frangômetro caiu mais 1%.',
-  'Genetic limits getting unlocked.',
+export const CLOSERS: string[] = [
+  '+1% de marrentice.',
+  'Level monstrão +1.',
+  'Volta amanhã sem desculpa.',
+  'O whey tá ansioso aí.',
+  'Mais um nível desbloqueado.',
+  'Próximo nível: monstrão brabo.',
+  'Mãe orgulhosa, +1 dia.',
+  'Cilada, mas valeu.',
+  'Hoje o ferro não respeitou ninguém.',
+  'Já pode posar no espelho.',
+  'Açaí 500ml liberado oficialmente.',
+  'Netflix pode te receber agora.',
+  'Vai descansar, marromba.',
+  'Foto pro story na luz boa.',
+  'Adesivou o gym hoje.',
+  '+1 ponto pra Grifinória da maromba.',
+  'O ferro pediu RH agora pouco.',
+  'Próxima parada: cama.',
+  'Hoje pegou pesado, em? Lá ele.',
+  'Aguentou até o final sem soltar? Lá ele.',
+  'Foi com tudo na hora do empurrão? Lá ele.',
+  'Subiu e desceu várias vezes hoje. Lá ele.',
+  'Tava bem firme na pegada, hein. Lá ele.',
+  'Foi de repetição lenta, com calma? Lá ele.',
+  'Hoje deu uma boa suada com o parceiro. Lá ele.',
 ]
 
 function hashString(s: string): number {
@@ -65,13 +76,13 @@ export function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-/** Combo: praise + frango line, escolhido de forma estável pelo seed (ex: session id). */
+/** Combo: praise (título) + closer (subtítulo). Estável pelo seed. */
 export function pickWorkoutEndMessage(seed: string): {
   praise: string
-  frango: string
+  closer: string
 } {
   return {
     praise: pickStable(PRAISES, seed),
-    frango: pickStable(FRANGO_LINES, seed + ':frango'),
+    closer: pickStable(CLOSERS, seed + ':closer'),
   }
 }

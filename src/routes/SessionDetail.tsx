@@ -15,6 +15,7 @@ import {
 import { api } from '@/lib/api'
 import { queryKeys } from '@/lib/query'
 import { pickWorkoutEndMessage } from '@/lib/motivational'
+import { MuscleHeatmap } from '@/features/sessions/MuscleHeatmap'
 import { MUSCLE_COLORS } from '@/types'
 import { estimate1RM } from '@/lib/calc-1rm'
 
@@ -99,7 +100,7 @@ export function SessionDetailRoute() {
             <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
               <p className="text-base font-semibold">{msg.praise}</p>
               <p className="mt-0.5 text-sm font-medium text-primary">
-                {msg.frango}
+                {msg.closer}
               </p>
             </div>
           )
@@ -123,6 +124,16 @@ export function SessionDetailRoute() {
             <p className="mt-1 text-xl font-semibold tabular-nums">
               {Math.round(s.totalVolumeKg ?? 0)} kg
             </p>
+          </div>
+        </div>
+
+        {/* Heatmap muscular */}
+        <div className="mt-4 rounded-xl border border-border bg-card p-4">
+          <h3 className="text-xs uppercase tracking-wider text-muted-foreground">
+            Músculos trabalhados
+          </h3>
+          <div className="mt-2">
+            <MuscleHeatmap sets={s.sets} exercises={exercisesQ.data ?? []} />
           </div>
         </div>
       </div>
