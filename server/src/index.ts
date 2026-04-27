@@ -15,7 +15,6 @@ import { workoutRoutes } from './routes/workouts.js'
 import { sessionRoutes } from './routes/sessions.js'
 import { planRoutes } from './routes/plans.js'
 import { measurementRoutes } from './routes/measurements.js'
-import { devRoutes } from './routes/dev.js'
 
 const app = Fastify({
   logger: {
@@ -133,11 +132,6 @@ await app.register(workoutRoutes)
 await app.register(sessionRoutes)
 await app.register(planRoutes)
 await app.register(measurementRoutes)
-
-if (!isProd()) {
-  app.log.warn('NODE_ENV != production — registrando /api/dev/bypass (NÃO use em prod)')
-  await app.register(devRoutes)
-}
 
 app.get('/api/health', async () => ({ ok: true, ts: Date.now() }))
 
