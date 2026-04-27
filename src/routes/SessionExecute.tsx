@@ -2,16 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Check,
-  ChevronLeft,
   ChevronRight,
   Flag,
   Minus,
-  Pause,
   Plus,
+  SkipForward,
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Dialog } from '@/components/ui/Dialog'
 import { useRestTimer } from '@/features/sessions/useRestTimer'
+import { ExerciseImage } from '@/features/exercises/ExerciseImage'
 import {
   useExercises,
   useMuscleGroups,
@@ -22,7 +23,7 @@ import { estimate1RM } from '@/lib/calc-1rm'
 import { cn } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query'
-import { EQUIPMENT_LABELS, MUSCLE_COLORS } from '@/types'
+import { EQUIPMENT_LABELS, type Exercise, MUSCLE_COLORS } from '@/types'
 
 interface SetDraft {
   weightKg: string
@@ -36,16 +37,18 @@ interface ExerciseDraft {
   workoutExerciseId: string
   sets: SetDraft[]
   restSeconds: number
+  setsTarget: number
+  repsMin: number
+  repsMax: number
 }
+
+type Mode = 'set' | 'rest'
 
 export function SessionExecuteRoute() {
   const { id } = useParams() // session id
   const navigate = useNavigate()
   const qc = useQueryClient()
 
-  // O id da rota é o session id; precisamos saber o workoutId.
-  // Passamos workoutId via state quando navegamos, mas pra robustez
-  // vamos buscar a session.
   const [workoutId, setWorkoutId] = useState<string | null>(null)
   const [startedAt] = useState(() => Date.now())
 
@@ -63,10 +66,13 @@ export function SessionExecuteRoute() {
   const timer = useRestTimer()
 
   const [drafts, setDrafts] = useState<ExerciseDraft[]>([])
-  const [focusIdx, setFocusIdx] = useState(0)
+  const [exIdx, setExIdx] = useState(0)
+  const [setIdx, setSetIdx] = useState(0)
+  const [mode, setMode] = useState<Mode>('set')
   const [finishing, setFinishing] = useState(false)
+  const [confirmExit, setConfirmExit] = useState(false)
 
-  // Hidrata drafts a partir do workout
+  // Hidrata drafts
   useEffect(() => {
     if (!workoutQ.data) return
     setDrafts(
@@ -74,6 +80,9 @@ export function SessionExecuteRoute() {
         exerciseId: we.exerciseId,
         workoutExerciseId: we.id,
         restSeconds: we.restSeconds,
+        setsTarget: we.setsTarget,
+        repsMin: we.repsMin,
+        repsMax: we.repsMax,
         sets: Array.from({ length: we.setsTarget }, () => ({
           weightKg: '',
           reps: '',
@@ -97,13 +106,17 @@ export function SessionExecuteRoute() {
     )
   }
 
-  const current = drafts[focusIdx]
+  const current = drafts[exIdx]
   const currentExercise = current ? exById.get(current.exerciseId) : null
-  const currentMuscle = currentExercise
-    ? musclesQ.data?.find((m) => m.id === currentExercise.primaryMuscleId)
-    : null
 
-  function updateSet(exIdx: number, setIdx: number, patch: Partial<SetDraft>) {
+  const totalSetsAll = drafts.reduce((acc, d) => acc + d.sets.length, 0)
+  const completedAll = drafts.reduce(
+    (acc, d) => acc + d.sets.filter((s) => s.completed).length,
+    0,
+  )
+  const overallProgress = totalSetsAll > 0 ? completedAll / totalSetsAll : 0
+
+  function updateCurrentSet(patch: Partial<SetDraft>) {
     setDrafts((d) =>
       d.map((ex, i) =>
         i === exIdx
@@ -118,7 +131,7 @@ export function SessionExecuteRoute() {
     )
   }
 
-  function addSet(exIdx: number) {
+  function addSet() {
     setDrafts((d) =>
       d.map((ex, i) =>
         i === exIdx
@@ -139,16 +152,45 @@ export function SessionExecuteRoute() {
     )
   }
 
-  function toggleSet(exIdx: number, setIdx: number) {
-    const ex = drafts[exIdx]
-    const set = ex.sets[setIdx]
-    const wasCompleted = set.completed
-    updateSet(exIdx, setIdx, {
-      completed: !wasCompleted,
-      completedAt: !wasCompleted ? Date.now() : null,
+  /** Marca a série atual como completa e vai pra tela de descanso (ou próximo exercício se foi a última e descanso = 0). */
+  function completeAndRest() {
+    updateCurrentSet({
+      completed: true,
+      completedAt: Date.now(),
     })
-    if (!wasCompleted && ex.restSeconds > 0) {
-      timer.start(ex.restSeconds)
+    // É a última série deste exercício?
+    if (current && setIdx === current.sets.length - 1) {
+      // Vai pro próximo exercício direto se houver
+      if (exIdx < drafts.length - 1) {
+        timer.start(current.restSeconds)
+        setMode('rest')
+      } else {
+        // último exercício, último set → fica na tela mostrando estado completo
+        setMode('set')
+      }
+    } else {
+      timer.start(current.restSeconds)
+      setMode('rest')
+    }
+  }
+
+  function advanceFromRest() {
+    timer.stop()
+    setMode('set')
+    if (current && setIdx < current.sets.length - 1) {
+      setSetIdx(setIdx + 1)
+    } else if (exIdx < drafts.length - 1) {
+      setExIdx(exIdx + 1)
+      setSetIdx(0)
+    }
+  }
+
+  function skipExercise() {
+    timer.stop()
+    if (exIdx < drafts.length - 1) {
+      setExIdx(exIdx + 1)
+      setSetIdx(0)
+      setMode('set')
     }
   }
 
@@ -172,9 +214,7 @@ export function SessionExecuteRoute() {
         ex.sets.forEach((s, idx) => {
           const w = Number(s.weightKg) || 0
           const r = Number(s.reps) || 0
-          if (s.completed && w > 0 && r > 0) {
-            totalVolume += w * r
-          }
+          if (s.completed && w > 0 && r > 0) totalVolume += w * r
           sets.push({
             exerciseId: ex.exerciseId,
             setNumber: idx + 1,
@@ -204,11 +244,8 @@ export function SessionExecuteRoute() {
   }
 
   function abandon() {
-    if (!confirm('Sair sem salvar este treino?')) return
     timer.stop()
-    if (id) {
-      void api.deleteSession(id).catch(() => {})
-    }
+    if (id) void api.deleteSession(id).catch(() => {})
     navigate('/')
   }
 
@@ -220,20 +257,27 @@ export function SessionExecuteRoute() {
     )
   }
 
-  const completedSets = current.sets.filter((s) => s.completed).length
-  const totalSetsAll = drafts.reduce((acc, d) => acc + d.sets.length, 0)
-  const completedAll = drafts.reduce(
-    (acc, d) => acc + d.sets.filter((s) => s.completed).length,
-    0,
+  const muscle = musclesQ.data?.find(
+    (m) => m.id === currentExercise.primaryMuscleId,
   )
-  const overallProgress = totalSetsAll > 0 ? completedAll / totalSetsAll : 0
+  const muscleColor =
+    MUSCLE_COLORS[currentExercise.primaryMuscleId] ?? '#64748b'
+  const currentSet = current.sets[setIdx]
+
+  // Próxima referência (pra mostrar na tela de descanso)
+  const nextSetIdx =
+    setIdx < current.sets.length - 1 ? setIdx + 1 : 0
+  const nextExerciseIdx =
+    setIdx < current.sets.length - 1 ? exIdx : Math.min(exIdx + 1, drafts.length - 1)
+  const nextDraft = drafts[nextExerciseIdx]
+  const nextExercise = nextDraft ? exById.get(nextDraft.exerciseId) : null
 
   return (
     <div className="flex h-full flex-col">
       <header className="border-b border-border bg-card">
         <div className="flex items-center gap-2 px-3 py-3">
           <button
-            onClick={abandon}
+            onClick={() => setConfirmExit(true)}
             className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
             aria-label="Sair"
           >
@@ -244,8 +288,8 @@ export function SessionExecuteRoute() {
               {workoutQ.data.name}
             </p>
             <p className="text-xs text-muted-foreground">
-              {focusIdx + 1} de {drafts.length} exercícios ·{' '}
-              {Math.round(overallProgress * 100)}%
+              {exIdx + 1}/{drafts.length} exercícios · {completedAll}/
+              {totalSetsAll} séries · {Math.round(overallProgress * 100)}%
             </p>
           </div>
           <button
@@ -265,200 +309,366 @@ export function SessionExecuteRoute() {
         </div>
       </header>
 
-      {timer.active ? <RestBar timer={timer} /> : null}
-
       <div className="flex-1 overflow-y-auto pb-32">
-        <div className="px-4 pt-4">
-          <div
-            className="flex items-center justify-center rounded-2xl py-6 text-center"
-            style={{
-              backgroundColor: `${MUSCLE_COLORS[currentExercise.primaryMuscleId] ?? '#64748b'}30`,
-            }}
-          >
-            <div>
-              <p
-                className="text-xs uppercase tracking-wider"
-                style={{
-                  color:
-                    MUSCLE_COLORS[currentExercise.primaryMuscleId] ?? '#64748b',
-                }}
-              >
-                {currentMuscle?.namePt} ·{' '}
-                {EQUIPMENT_LABELS[currentExercise.equipment] ??
-                  currentExercise.equipment}
-              </p>
-              <h1 className="mt-1 px-4 text-2xl font-semibold tracking-tight">
-                {currentExercise.name}
-              </h1>
-            </div>
-          </div>
-
-          <details className="mt-3 rounded-lg bg-card text-sm">
-            <summary className="cursor-pointer px-3 py-2 text-muted-foreground">
-              Como executar
-            </summary>
-            <p className="px-3 pb-3 leading-relaxed">
-              {currentExercise.instructions}
-            </p>
-          </details>
-        </div>
-
-        <div className="mt-4 px-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-              Séries ({completedSets}/{current.sets.length})
-            </h2>
-            <button
-              type="button"
-              onClick={() => addSet(focusIdx)}
-              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-xs hover:bg-accent"
-            >
-              <Plus className="size-3" />
-              Série
-            </button>
-          </div>
-
-          <ul className="mt-2 space-y-1.5">
-            {current.sets.map((s, idx) => {
-              const w = Number(s.weightKg) || 0
-              const r = Number(s.reps) || 0
-              const oneRm = w && r ? Math.round(estimate1RM(w, r)) : null
-              return (
-                <li
-                  key={idx}
-                  className={cn(
-                    'flex items-center gap-2 rounded-lg border p-2 transition-colors',
-                    s.completed
-                      ? 'border-primary/40 bg-primary/5'
-                      : 'border-border bg-card',
-                  )}
-                >
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold tabular-nums">
-                    {idx + 1}
-                  </span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="kg"
-                    value={s.weightKg}
-                    onChange={(e) =>
-                      updateSet(focusIdx, idx, { weightKg: e.target.value })
-                    }
-                    className="h-9 w-20 rounded-md border border-input bg-background px-2 text-center tabular-nums"
-                  />
-                  <span className="text-muted-foreground">×</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="reps"
-                    value={s.reps}
-                    onChange={(e) =>
-                      updateSet(focusIdx, idx, { reps: e.target.value })
-                    }
-                    className="h-9 w-20 rounded-md border border-input bg-background px-2 text-center tabular-nums"
-                  />
-                  {oneRm ? (
-                    <span className="hidden text-xs text-muted-foreground sm:inline">
-                      ≈{oneRm}kg 1RM
-                    </span>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => toggleSet(focusIdx, idx)}
-                    className={cn(
-                      'ml-auto flex size-9 items-center justify-center rounded-full transition',
-                      s.completed
-                        ? 'bg-primary text-primary-foreground'
-                        : 'border border-border text-muted-foreground hover:bg-accent',
-                    )}
-                    aria-pressed={s.completed}
-                    aria-label={s.completed ? 'Desmarcar' : 'Marcar feito'}
-                  >
-                    <Check className="size-4" />
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
+        {mode === 'set' ? (
+          <SetView
+            current={current}
+            currentExercise={currentExercise}
+            currentSet={currentSet}
+            setIdx={setIdx}
+            muscleName={muscle?.namePt ?? ''}
+            muscleColor={muscleColor}
+            equipmentLabel={
+              EQUIPMENT_LABELS[currentExercise.equipment] ??
+              currentExercise.equipment
+            }
+            onUpdateSet={updateCurrentSet}
+            onComplete={completeAndRest}
+            onAddSet={addSet}
+            onSkipExercise={skipExercise}
+            onJumpToSet={setSetIdx}
+          />
+        ) : (
+          <RestView
+            timer={timer}
+            currentExercise={currentExercise}
+            muscleColor={muscleColor}
+            nextExercise={nextExercise ?? null}
+            nextSetIdx={nextSetIdx}
+            isLastSetOfExercise={setIdx === current.sets.length - 1}
+            onSkip={advanceFromRest}
+          />
+        )}
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 backdrop-blur safe-bottom">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 p-3">
-          <Button
-            variant="ghost"
-            onClick={() => setFocusIdx((i) => Math.max(0, i - 1))}
-            disabled={focusIdx === 0}
-            className="flex-1"
-          >
-            <ChevronLeft className="size-4" />
-            Anterior
-          </Button>
-          <Button
-            onClick={() =>
-              setFocusIdx((i) => Math.min(drafts.length - 1, i + 1))
-            }
-            disabled={focusIdx === drafts.length - 1}
-            className="flex-1"
-          >
-            Próximo
-            <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      </nav>
+      <Dialog
+        open={confirmExit}
+        onClose={() => setConfirmExit(false)}
+        title="Sair do treino?"
+        description="Você não vai perder progresso só se finalizar pelo botão Finalizar. Sair agora descarta a sessão."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmExit(false)}>
+              Continuar treinando
+            </Button>
+            <Button variant="destructive" onClick={abandon}>
+              Sair sem salvar
+            </Button>
+          </>
+        }
+      />
     </div>
   )
 }
 
-function RestBar({
-  timer,
+function SetView({
+  current,
+  currentExercise,
+  currentSet,
+  setIdx,
+  muscleName,
+  muscleColor,
+  equipmentLabel,
+  onUpdateSet,
+  onComplete,
+  onAddSet,
+  onSkipExercise,
+  onJumpToSet,
 }: {
-  timer: ReturnType<typeof useRestTimer>
+  current: ExerciseDraft
+  currentExercise: Exercise
+  currentSet: SetDraft
+  setIdx: number
+  muscleName: string
+  muscleColor: string
+  equipmentLabel: string
+  onUpdateSet: (patch: Partial<SetDraft>) => void
+  onComplete: () => void
+  onAddSet: () => void
+  onSkipExercise: () => void
+  onJumpToSet: (idx: number) => void
 }) {
+  const w = Number(currentSet.weightKg) || 0
+  const r = Number(currentSet.reps) || 0
+  const oneRm = w && r ? Math.round(estimate1RM(w, r)) : null
+
   return (
-    <div className="border-b border-primary/30 bg-primary/10">
-      <div className="mx-auto flex max-w-2xl items-center gap-3 p-3">
+    <div className="px-4 pt-4">
+      <ExerciseImage
+        exercise={currentExercise}
+        size="lg"
+        className="w-full"
+      />
+
+      <div className="mt-3">
+        <p
+          className="text-xs uppercase tracking-wider"
+          style={{ color: muscleColor }}
+        >
+          {muscleName} · {equipmentLabel}
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {currentExercise.name}
+        </h1>
+      </div>
+
+      <details className="mt-2 rounded-lg bg-card text-sm">
+        <summary className="cursor-pointer px-3 py-2 text-muted-foreground">
+          Como executar
+        </summary>
+        <p className="px-3 pb-3 leading-relaxed">
+          {currentExercise.instructions}
+        </p>
+      </details>
+
+      {/* Mini chips de série pra ver progresso e pular */}
+      <div className="mt-4 flex items-center gap-1.5">
+        {current.sets.map((s, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onJumpToSet(i)}
+            className={cn(
+              'flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-semibold tabular-nums transition',
+              i === setIdx
+                ? 'bg-primary text-primary-foreground'
+                : s.completed
+                  ? 'bg-primary/15 text-primary'
+                  : 'border border-border text-muted-foreground',
+            )}
+            aria-label={`Série ${i + 1}`}
+          >
+            {s.completed ? <Check className="size-3.5" /> : i + 1}
+          </button>
+        ))}
         <button
           type="button"
-          onClick={() => timer.adjust(-15)}
-          className="flex size-8 items-center justify-center rounded-full bg-background text-foreground"
-          aria-label="-15s"
+          onClick={onAddSet}
+          className="ml-1 flex size-7 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground hover:bg-accent"
+          aria-label="Adicionar série"
         >
-          <Minus className="size-4" />
+          <Plus className="size-3.5" />
         </button>
-        <div className="min-w-0 flex-1 text-center">
-          <p className="text-xs uppercase tracking-wider text-primary">
-            Descanso
+      </div>
+
+      {/* Card grande da série atual */}
+      <div className="mt-4 rounded-2xl border border-border bg-card p-5">
+        <div className="flex items-baseline justify-between">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">
+            Série {setIdx + 1} de {current.sets.length}
           </p>
-          <p className="text-2xl font-semibold tabular-nums">
-            {Math.floor(timer.remaining / 60)
-              .toString()
-              .padStart(2, '0')}
-            :{(timer.remaining % 60).toString().padStart(2, '0')}
+          <p className="text-xs text-muted-foreground">
+            alvo: {current.repsMin}–{current.repsMax} reps
           </p>
-          <div className="mt-1 h-1 rounded-full bg-background">
-            <div
-              className="h-full rounded-full bg-primary transition-all"
-              style={{ width: `${timer.progress * 100}%` }}
+        </div>
+
+        <div className="mt-3 flex items-end gap-3">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Peso (kg)
+            </label>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder="0"
+              value={currentSet.weightKg}
+              onChange={(e) => onUpdateSet({ weightKg: e.target.value })}
+              className="h-14 w-full rounded-lg border border-input bg-background px-3 text-2xl font-semibold tabular-nums"
+            />
+          </div>
+          <span className="pb-3 text-2xl text-muted-foreground">×</span>
+          <div className="flex-1">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Reps
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="0"
+              value={currentSet.reps}
+              onChange={(e) => onUpdateSet({ reps: e.target.value })}
+              className="h-14 w-full rounded-lg border border-input bg-background px-3 text-2xl font-semibold tabular-nums"
             />
           </div>
         </div>
+
+        {oneRm ? (
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            ≈ {oneRm}kg de 1RM estimado
+          </p>
+        ) : null}
+      </div>
+
+      {/* Botões grandes */}
+      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 backdrop-blur safe-bottom">
+        <div className="mx-auto flex max-w-2xl items-center gap-2 p-3">
+          <Button
+            variant="ghost"
+            onClick={onSkipExercise}
+            className="flex-1"
+          >
+            <SkipForward className="size-4" />
+            Pular exerc.
+          </Button>
+          <Button
+            onClick={onComplete}
+            disabled={!currentSet.weightKg || !currentSet.reps}
+            className="flex-[2]"
+            size="lg"
+          >
+            <Check className="size-4" />
+            Concluir série
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RestView({
+  timer,
+  currentExercise,
+  muscleColor,
+  nextExercise,
+  nextSetIdx,
+  isLastSetOfExercise,
+  onSkip,
+}: {
+  timer: ReturnType<typeof useRestTimer>
+  currentExercise: Exercise
+  muscleColor: string
+  nextExercise: Exercise | null
+  nextSetIdx: number
+  isLastSetOfExercise: boolean
+  onSkip: () => void
+}) {
+  const finished = timer.remaining <= 0
+  return (
+    <div className="flex h-full flex-col items-center justify-start px-4 pt-6">
+      <div className="w-full text-center">
+        <p
+          className="text-xs uppercase tracking-wider"
+          style={{ color: muscleColor }}
+        >
+          Descansando
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Próxima:{' '}
+          {isLastSetOfExercise && nextExercise && nextExercise !== currentExercise
+            ? nextExercise.name
+            : `${currentExercise.name} · série ${nextSetIdx + 1}`}
+        </p>
+      </div>
+
+      <RestRing timer={timer} muscleColor={muscleColor} />
+
+      <div className="mt-6 flex items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => timer.adjust(-15)}
+          className="inline-flex h-11 items-center gap-1 rounded-full border border-border bg-card px-4 text-sm font-medium hover:bg-accent"
+        >
+          <Minus className="size-4" />
+          15s
+        </button>
         <button
           type="button"
           onClick={() => timer.adjust(15)}
-          className="flex size-8 items-center justify-center rounded-full bg-background text-foreground"
-          aria-label="+15s"
+          className="inline-flex h-11 items-center gap-1 rounded-full border border-border bg-card px-4 text-sm font-medium hover:bg-accent"
         >
           <Plus className="size-4" />
+          15s
         </button>
-        <button
-          type="button"
-          onClick={timer.stop}
-          className="flex size-8 items-center justify-center rounded-full bg-background text-foreground"
-          aria-label="Parar"
-        >
-          <Pause className="size-4" />
-        </button>
+      </div>
+
+      {nextExercise ? (
+        <div className="mt-8 w-full max-w-md rounded-2xl border border-border bg-card p-3">
+          <div className="flex items-center gap-3">
+            <ExerciseImage exercise={nextExercise} size="md" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                A seguir
+              </p>
+              <p className="truncate font-medium">{nextExercise.name}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 backdrop-blur safe-bottom">
+        <div className="mx-auto flex max-w-2xl items-center gap-2 p-3">
+          <Button
+            variant="ghost"
+            onClick={onSkip}
+            className="flex-1"
+          >
+            <SkipForward className="size-4" />
+            Pular descanso
+          </Button>
+          <Button
+            onClick={onSkip}
+            className={cn('flex-[2]', finished && 'animate-pulse')}
+            size="lg"
+          >
+            <ChevronRight className="size-4" />
+            {finished ? 'Próxima série' : 'Já estou pronto'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RestRing({
+  timer,
+  muscleColor,
+}: {
+  timer: ReturnType<typeof useRestTimer>
+  muscleColor: string
+}) {
+  const RADIUS = 90
+  const STROKE = 12
+  const C = 2 * Math.PI * RADIUS
+  const offset = C * (1 - timer.progress)
+  const remaining = timer.remaining
+  const mins = Math.floor(remaining / 60)
+  const secs = remaining % 60
+
+  return (
+    <div className="relative mt-6 size-56">
+      <svg
+        viewBox="0 0 220 220"
+        className="size-full -rotate-90"
+        aria-hidden="true"
+      >
+        <circle
+          cx="110"
+          cy="110"
+          r={RADIUS}
+          fill="none"
+          stroke="var(--color-secondary)"
+          strokeWidth={STROKE}
+        />
+        <circle
+          cx="110"
+          cy="110"
+          r={RADIUS}
+          fill="none"
+          stroke={muscleColor}
+          strokeWidth={STROKE}
+          strokeLinecap="round"
+          strokeDasharray={C}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.25s linear' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-5xl font-semibold tabular-nums">
+          {mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
+        </span>
+        <span className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
+          {timer.durationSeconds}s prog.
+        </span>
       </div>
     </div>
   )

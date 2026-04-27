@@ -42,6 +42,10 @@ export const config = {
     'STATIC_DIR',
     path.resolve(__dirname, '../../dist'),
   ),
+  exerciseImagesDir: optional(
+    'EXERCISE_IMAGES_DIR',
+    path.resolve(__dirname, '../data/exercise-images'),
+  ),
 }
 
 export function isProd() {

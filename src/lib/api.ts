@@ -2,6 +2,8 @@ import type {
   Exercise,
   MuscleGroup,
   OnboardingPayload,
+  Plan,
+  PlanInput,
   Session,
   SessionWithSets,
   User,
@@ -174,6 +176,38 @@ export const api = {
   },
   deleteSession(id: string) {
     return request<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' })
+  },
+
+  // ----- plans -----
+  async listPlans(): Promise<Plan[]> {
+    const { plans } = await request<{ plans: Plan[] }>('/api/plans')
+    return plans
+  },
+  async getPlan(id: string): Promise<Plan> {
+    const { plan } = await request<{ plan: Plan }>(`/api/plans/${id}`)
+    return plan
+  },
+  async createPlan(payload: PlanInput): Promise<Plan> {
+    const { plan } = await request<{ plan: Plan }>('/api/plans', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return plan
+  },
+  async updatePlan(id: string, payload: PlanInput): Promise<Plan> {
+    const { plan } = await request<{ plan: Plan }>(`/api/plans/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    })
+    return plan
+  },
+  activatePlan(id: string) {
+    return request<{ ok: true }>(`/api/plans/${id}/activate`, {
+      method: 'POST',
+    })
+  },
+  deletePlan(id: string) {
+    return request<{ ok: true }>(`/api/plans/${id}`, { method: 'DELETE' })
   },
 }
 

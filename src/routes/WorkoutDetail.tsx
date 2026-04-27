@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Pencil, Play, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Dialog } from '@/components/ui/Dialog'
+import { ExerciseImage } from '@/features/exercises/ExerciseImage'
 import {
   useDeleteWorkout,
   useWorkout,
@@ -10,7 +13,8 @@ import {
   useMuscleGroups,
 } from '@/features/exercises/queries'
 import { api } from '@/lib/api'
-import { EQUIPMENT_LABELS, MUSCLE_COLORS } from '@/types'
+import { estimateWorkoutVolume, formatVolume } from '@/lib/workout-volume'
+import { EQUIPMENT_LABELS } from '@/types'
 
 export function WorkoutDetailRoute() {
   const { id } = useParams()
@@ -19,6 +23,7 @@ export function WorkoutDetailRoute() {
   const exercisesQ = useExercises()
   const musclesQ = useMuscleGroups()
   const deleteW = useDeleteWorkout()
+  const [confirmDel, setConfirmDel] = useState(false)
 
   if (workoutQ.isLoading) {
     return (
@@ -41,6 +46,7 @@ export function WorkoutDetailRoute() {
   const w = workoutQ.data
   const exById = new Map(exercisesQ.data?.map((e) => [e.id, e]))
   const muById = new Map(musclesQ.data?.map((m) => [m.id, m]))
+  const volume = estimateWorkoutVolume(w)
 
   async function start() {
     if (!w.id) return
@@ -48,8 +54,7 @@ export function WorkoutDetailRoute() {
     navigate(`/session/${sessionId}`)
   }
 
-  async function remove() {
-    if (!confirm(`Apagar "${w.name}"?`)) return
+  async function doDelete() {
     await deleteW.mutateAsync(w.id)
     navigate('/workouts')
   }
@@ -72,7 +77,7 @@ export function WorkoutDetailRoute() {
           <Pencil className="size-4" />
         </Link>
         <button
-          onClick={remove}
+          onClick={() => setConfirmDel(true)}
           className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           aria-label="Apagar"
         >
@@ -87,6 +92,8 @@ export function WorkoutDetailRoute() {
             {w.mode === 'strength' ? 'Força' : 'Hipertrofia'}
           </span>
           <span>{w.exercises.length} exercícios</span>
+          <span aria-hidden>·</span>
+          <span>{formatVolume(volume)}</span>
         </div>
       </div>
 
@@ -99,14 +106,15 @@ export function WorkoutDetailRoute() {
               key={we.id}
               className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
             >
-              <div
-                className="flex size-10 shrink-0 items-center justify-center rounded-md text-xs font-semibold text-white"
-                style={{
-                  backgroundColor:
-                    MUSCLE_COLORS[ex?.primaryMuscleId ?? ''] ?? '#64748b',
-                }}
-              >
-                {idx + 1}
+              <div className="relative">
+                {ex ? (
+                  <ExerciseImage exercise={ex} size="sm" />
+                ) : (
+                  <div className="size-12 rounded-lg bg-secondary" />
+                )}
+                <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-background text-[10px] font-bold ring-2 ring-card">
+                  {idx + 1}
+                </span>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">
@@ -135,6 +143,23 @@ export function WorkoutDetailRoute() {
           </Button>
         </div>
       </div>
+
+      <Dialog
+        open={confirmDel}
+        onClose={() => setConfirmDel(false)}
+        title={`Apagar "${w.name}"?`}
+        description="Sessões já feitas com esse treino continuam no histórico, mas o template some."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDel(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={doDelete}>
+              Apagar
+            </Button>
+          </>
+        }
+      />
     </div>
   )
 }

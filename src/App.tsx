@@ -8,6 +8,8 @@ import { ExerciseNewRoute } from '@/routes/ExerciseNew'
 import { WorkoutsRoute } from '@/routes/Workouts'
 import { WorkoutDetailRoute } from '@/routes/WorkoutDetail'
 import { WorkoutEditorRoute } from '@/routes/WorkoutEditor'
+import { PlansRoute } from '@/routes/Plans'
+import { PlanEditorRoute } from '@/routes/PlanEditor'
 import { HistoryRoute } from '@/routes/History'
 import { SessionDetailRoute } from '@/routes/SessionDetail'
 import { SessionExecuteRoute } from '@/routes/SessionExecute'
@@ -49,6 +51,9 @@ function AuthedRoutes() {
       <Route path="/workouts/new" element={<WorkoutEditorRoute />} />
       <Route path="/workouts/:id/edit" element={<WorkoutEditorRoute />} />
       <Route path="/workouts/:id" element={<WorkoutDetailRoute />} />
+      <Route path="/plans" element={<PlansRoute />} />
+      <Route path="/plans/new" element={<PlanEditorRoute />} />
+      <Route path="/plans/:id" element={<PlanEditorRoute />} />
       <Route path="/history/:id" element={<SessionDetailRoute />} />
       <Route path="/session/:id" element={<SessionExecuteRoute />} />
       <Route path="/settings" element={<SettingsRoute />} />

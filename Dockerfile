@@ -1,5 +1,7 @@
 # ---------- 1) build do frontend ----------
 FROM node:22-alpine AS frontend-builder
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

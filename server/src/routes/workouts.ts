@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { db, schema } from '../db/client.js'
@@ -49,8 +49,35 @@ export async function workoutRoutes(app: FastifyInstance) {
         .select()
         .from(schema.workouts)
         .where(eq(schema.workouts.userId, req.user!.id))
+      if (rows.length === 0) return { workouts: [] }
 
-      return { workouts: rows }
+      const allExercises = await db
+        .select()
+        .from(schema.workoutExercises)
+        .where(
+          inArray(
+            schema.workoutExercises.workoutId,
+            rows.map((r) => r.id),
+          ),
+        )
+        .orderBy(asc(schema.workoutExercises.orderIndex))
+
+      const byWorkout = new Map<
+        string,
+        (typeof schema.workoutExercises.$inferSelect)[]
+      >()
+      for (const e of allExercises) {
+        const arr = byWorkout.get(e.workoutId) ?? []
+        arr.push(e)
+        byWorkout.set(e.workoutId, arr)
+      }
+
+      return {
+        workouts: rows.map((r) => ({
+          ...r,
+          exercises: byWorkout.get(r.id) ?? [],
+        })),
+      }
     },
   )
 

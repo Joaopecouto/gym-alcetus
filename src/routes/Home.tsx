@@ -1,17 +1,30 @@
 import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { Dumbbell, Flame, Play, Settings as SettingsIcon } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  CalendarDays,
+  Dumbbell,
+  Flame,
+  Play,
+  Settings as SettingsIcon,
+} from 'lucide-react'
 import { format, isToday, isYesterday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { useSessions } from '@/features/sessions/queries'
 import { useWorkouts } from '@/features/workouts/queries'
+import { useActivePlan } from '@/features/plans/queries'
 import { useUser } from '@/stores/user'
+import { api } from '@/lib/api'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query'
 
 export function HomeRoute() {
   const user = useUser((s) => s.user)
   const sessionsQ = useSessions()
   const workoutsQ = useWorkouts()
+  const activePlanQ = useActivePlan()
+  const navigate = useNavigate()
+  const qc = useQueryClient()
 
   const stats = useMemo(() => {
     const finished = (sessionsQ.data ?? []).filter((s) => s.finishedAt)
@@ -37,6 +50,24 @@ export function HomeRoute() {
     return { last, streak, total: finished.length }
   }, [sessionsQ.data])
 
+  const todayWorkout = useMemo(() => {
+    if (!activePlanQ.data) return null
+    const today = new Date().getDay()
+    const day = activePlanQ.data.days.find((d) => d.dayOfWeek === today)
+    if (!day || !day.workoutId) return null
+    return workoutsQ.data?.find((w) => w.id === day.workoutId) ?? null
+  }, [activePlanQ.data, workoutsQ.data])
+
+  async function startToday() {
+    if (!todayWorkout) return
+    const sessionId = await api.startSession(
+      todayWorkout.id,
+      activePlanQ.data?.id,
+    )
+    qc.invalidateQueries({ queryKey: queryKeys.sessions })
+    navigate(`/session/${sessionId}`)
+  }
+
   const greeting = useMemo(() => greetingFor(user?.name ?? 'você'), [user])
 
   return (
@@ -60,22 +91,53 @@ export function HomeRoute() {
       />
 
       <section className="space-y-3 px-4 pt-4">
-        <Link
-          to="/workouts"
-          className="flex items-center gap-3 rounded-xl bg-primary p-5 text-left text-primary-foreground shadow-sm"
-        >
-          <div className="flex size-11 items-center justify-center rounded-full bg-primary-foreground/15">
-            <Play className="size-5" />
-          </div>
-          <div>
-            <p className="text-base font-semibold">Iniciar treino</p>
-            <p className="text-sm opacity-90">
-              {(workoutsQ.data?.length ?? 0) === 0
-                ? 'Crie um treino pra começar'
-                : 'Escolha um dos seus treinos salvos'}
+        {todayWorkout ? (
+          <button
+            type="button"
+            onClick={startToday}
+            className="flex w-full items-center gap-3 rounded-xl bg-primary p-5 text-left text-primary-foreground shadow-sm"
+          >
+            <div className="flex size-11 items-center justify-center rounded-full bg-primary-foreground/15">
+              <Play className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs uppercase tracking-wider opacity-80">
+                Treino de hoje
+              </p>
+              <p className="truncate text-base font-semibold">
+                {todayWorkout.name}
+              </p>
+              <p className="text-sm opacity-90">
+                {todayWorkout.exercises.length} exercícios ·{' '}
+                {todayWorkout.mode === 'strength' ? 'Força' : 'Hipertrofia'}
+              </p>
+            </div>
+          </button>
+        ) : activePlanQ.data ? (
+          <div className="rounded-xl border border-dashed border-border p-5 text-center">
+            <p className="text-sm">😎 Hoje é dia de descanso</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Plano ativo: {activePlanQ.data.name}
             </p>
           </div>
-        </Link>
+        ) : (
+          <Link
+            to="/workouts"
+            className="flex items-center gap-3 rounded-xl bg-primary p-5 text-left text-primary-foreground shadow-sm"
+          >
+            <div className="flex size-11 items-center justify-center rounded-full bg-primary-foreground/15">
+              <Play className="size-5" />
+            </div>
+            <div>
+              <p className="text-base font-semibold">Iniciar treino</p>
+              <p className="text-sm opacity-90">
+                {(workoutsQ.data?.length ?? 0) === 0
+                  ? 'Crie um treino pra começar'
+                  : 'Escolha um dos seus treinos salvos'}
+              </p>
+            </div>
+          </Link>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-border bg-card p-4">
@@ -101,6 +163,16 @@ export function HomeRoute() {
           </div>
         </div>
 
+        {!activePlanQ.data && (workoutsQ.data?.length ?? 0) > 0 ? (
+          <Link
+            to="/plans/new"
+            className="flex items-center gap-3 rounded-xl border border-dashed border-border p-3 text-sm hover:bg-accent"
+          >
+            <CalendarDays className="size-5 text-muted-foreground" />
+            <span className="flex-1">Crie um plano semanal</span>
+          </Link>
+        ) : null}
+
         {stats.last ? (
           <Link
             to={`/history/${stats.last.id}`}
@@ -118,19 +190,7 @@ export function HomeRoute() {
               {Math.round(stats.last.totalVolumeKg ?? 0)}kg de volume
             </p>
           </Link>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border p-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Você ainda não treinou. Crie um treino e comece!
-            </p>
-            <Link
-              to="/workouts/new"
-              className="mt-3 inline-flex h-9 items-center gap-1 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground"
-            >
-              Criar primeiro treino
-            </Link>
-          </div>
-        )}
+        ) : null}
       </section>
     </div>
   )

@@ -112,6 +112,43 @@ export interface WorkoutTemplate {
   }>
 }
 
+export interface Plan {
+  id: string
+  userId: string
+  name: string
+  isActive: boolean
+  createdAt: number
+  days: PlanDay[]
+}
+
+export interface PlanDay {
+  id: string
+  planId: string
+  dayOfWeek: number // 0 = domingo, 6 = sábado
+  workoutId: string | null
+}
+
+export interface PlanInput {
+  name: string
+  isActive?: boolean
+  days: Array<{
+    dayOfWeek: number
+    workoutId: string | null
+  }>
+}
+
+export const DAY_LABELS_FULL = [
+  'Domingo',
+  'Segunda',
+  'Terça',
+  'Quarta',
+  'Quinta',
+  'Sexta',
+  'Sábado',
+] as const
+
+export const DAY_LABELS_SHORT = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'] as const
+
 export interface Session {
   id: string
   userId: string

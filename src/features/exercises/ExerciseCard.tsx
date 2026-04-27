@@ -1,9 +1,9 @@
 import { Heart, Lock, User as UserIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { ExerciseImage } from '@/features/exercises/ExerciseImage'
 import { cn } from '@/lib/utils'
 import {
   EQUIPMENT_LABELS,
-  MUSCLE_COLORS,
   type Exercise,
   type MuscleGroup,
 } from '@/types'
@@ -22,7 +22,6 @@ export function ExerciseCard({
   to,
 }: Props) {
   const muscle = muscleGroups.find((m) => m.id === exercise.primaryMuscleId)
-  const muscleColor = MUSCLE_COLORS[exercise.primaryMuscleId] ?? '#64748b'
   const equipmentLabel =
     EQUIPMENT_LABELS[exercise.equipment] ?? exercise.equipment
 
@@ -36,13 +35,7 @@ export function ExerciseCard({
         aria-label={exercise.name}
       />
 
-      <div
-        className="flex size-12 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
-        style={{ backgroundColor: muscleColor }}
-        aria-hidden="true"
-      >
-        {muscle?.namePt.slice(0, 3).toUpperCase() ?? '?'}
-      </div>
+      <ExerciseImage exercise={exercise} size="sm" />
 
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{exercise.name}</p>

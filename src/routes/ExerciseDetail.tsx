@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { ArrowLeft, Heart, Trash2 } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
+import { Dialog } from '@/components/ui/Dialog'
+import { ExerciseImage } from '@/features/exercises/ExerciseImage'
 import {
   useDeleteExercise,
   useExercises,
@@ -8,7 +11,7 @@ import {
   useToggleFavorite,
 } from '@/features/exercises/queries'
 import { cn } from '@/lib/utils'
-import { EQUIPMENT_LABELS, MUSCLE_COLORS } from '@/types'
+import { EQUIPMENT_LABELS } from '@/types'
 
 export function ExerciseDetailRoute() {
   const { id } = useParams()
@@ -19,6 +22,7 @@ export function ExerciseDetailRoute() {
   const deleteEx = useDeleteExercise()
 
   const exercise = exercises.data?.find((e) => e.id === id)
+  const [confirmDel, setConfirmDel] = useState(false)
 
   if (exercises.isLoading) {
     return (
@@ -40,7 +44,6 @@ export function ExerciseDetailRoute() {
   }
 
   const muscle = muscles.data?.find((m) => m.id === exercise.primaryMuscleId)
-  const muscleColor = MUSCLE_COLORS[exercise.primaryMuscleId] ?? '#64748b'
   const secondaries = exercise.secondaryMuscles
     .map((id) => muscles.data?.find((m) => m.id === id)?.namePt)
     .filter(Boolean)
@@ -74,13 +77,7 @@ export function ExerciseDetailRoute() {
       </div>
 
       <div className="px-4 pt-4">
-        <div
-          className="flex h-32 items-center justify-center rounded-2xl text-3xl font-bold text-white"
-          style={{ backgroundColor: muscleColor }}
-          aria-hidden="true"
-        >
-          {muscle?.namePt}
-        </div>
+        <ExerciseImage exercise={exercise} size="xl" className="w-full" />
 
         <h1 className="mt-4 text-2xl font-semibold tracking-tight">
           {exercise.name}
@@ -116,19 +113,35 @@ export function ExerciseDetailRoute() {
 
       {exercise.isCustom ? (
         <div className="mt-8 px-4">
-          <Button
-            variant="destructive"
-            onClick={async () => {
-              if (!confirm('Apagar esse exercício?')) return
-              await deleteEx.mutateAsync(exercise.id)
-              navigate('/library')
-            }}
-          >
+          <Button variant="destructive" onClick={() => setConfirmDel(true)}>
             <Trash2 className="size-4" />
             Apagar exercício custom
           </Button>
         </div>
       ) : null}
+
+      <Dialog
+        open={confirmDel}
+        onClose={() => setConfirmDel(false)}
+        title={`Apagar "${exercise.name}"?`}
+        description="Treinos que usam esse exercício não são afetados, mas vão exibir só o id."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDel(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                await deleteEx.mutateAsync(exercise.id)
+                navigate('/library')
+              }}
+            >
+              Apagar
+            </Button>
+          </>
+        }
+      />
     </div>
   )
 }

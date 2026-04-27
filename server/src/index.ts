@@ -13,6 +13,7 @@ import { meRoutes } from './routes/me.js'
 import { catalogRoutes } from './routes/catalog.js'
 import { workoutRoutes } from './routes/workouts.js'
 import { sessionRoutes } from './routes/sessions.js'
+import { planRoutes } from './routes/plans.js'
 import { devRoutes } from './routes/dev.js'
 
 const app = Fastify({
@@ -57,6 +58,27 @@ try {
     }
     app.log.info(`seed ok: ${EXERCISES.length} exercícios`)
   }
+
+  // Auto-detecta imagens em config.exerciseImagesDir e popula imagePath.
+  // Convenção: nome do arquivo = id do exercício + extensão (ex: ex-bench-press.gif)
+  if (fs.existsSync(config.exerciseImagesDir)) {
+    const { eq } = await import('drizzle-orm')
+    const files = fs.readdirSync(config.exerciseImagesDir)
+    let updated = 0
+    for (const filename of files) {
+      const match = filename.match(/^(.+)\.(gif|png|jpg|jpeg|webp|svg)$/i)
+      if (!match) continue
+      const id = match[1]
+      const result = await db
+        .update(schema.exercises)
+        .set({ imagePath: `/exercise-images/${filename}` })
+        .where(eq(schema.exercises.id, id))
+      if (result.rowsAffected > 0) updated++
+    }
+    if (updated > 0) {
+      app.log.info(`imagePath atualizado pra ${updated} exercícios`)
+    }
+  }
 } catch (err) {
   app.log.error({ err }, 'migrations/seed failed')
   process.exit(1)
@@ -73,6 +95,7 @@ await app.register(meRoutes)
 await app.register(catalogRoutes)
 await app.register(workoutRoutes)
 await app.register(sessionRoutes)
+await app.register(planRoutes)
 
 if (!isProd()) {
   app.log.warn('NODE_ENV != production — registrando /api/dev/bypass (NÃO use em prod)')
@@ -80,6 +103,24 @@ if (!isProd()) {
 }
 
 app.get('/api/health', async () => ({ ok: true, ts: Date.now() }))
+
+// ----- static: imagens dos exercícios -----
+// Pasta separada do build do frontend, persistida em volume Docker.
+// Cache agressivo (1 ano) — os arquivos são imutáveis (versionar via filename).
+if (fs.existsSync(config.exerciseImagesDir)) {
+  await app.register(fastifyStatic, {
+    root: config.exerciseImagesDir,
+    prefix: '/exercise-images/',
+    wildcard: false,
+    decorateReply: false,
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+    immutable: true,
+  })
+} else {
+  app.log.info(
+    `exercise images dir não existe (${config.exerciseImagesDir}). Crie e adicione arquivos pra servir.`,
+  )
+}
 
 // ----- static SPA + history fallback -----
 const staticDir = config.staticDir

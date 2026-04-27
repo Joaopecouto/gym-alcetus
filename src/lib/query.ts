@@ -19,4 +19,6 @@ export const queryKeys = {
   workoutTemplates: ['workout-templates'] as const,
   sessions: ['sessions'] as const,
   session: (id: string) => ['session', id] as const,
+  plans: ['plans'] as const,
+  plan: (id: string) => ['plan', id] as const,
 }
