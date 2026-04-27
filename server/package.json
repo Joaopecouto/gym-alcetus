@@ -9,7 +9,9 @@
     "start": "node dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "images:fetch": "tsx scripts/fetch-images.ts",
+    "images:fetch:dry": "tsx scripts/fetch-images.ts --dry-run"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

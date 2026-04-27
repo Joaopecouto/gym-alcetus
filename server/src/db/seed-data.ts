@@ -92,6 +92,76 @@ export const EXERCISES: SeedExercise[] = [
   { id: 'ex-cable-crunch', name: 'Abdominal na polia', primaryMuscle: 'abs', secondaryMuscles: [], equipment: 'cable', difficulty: 'intermediate', instructions: 'Ajoelhado de frente para a polia alta, corda atrás da cabeça. Flexione o tronco contraindo o abdômen.' },
 ]
 
+/**
+ * Mapeamento dos nossos exercise ids → ids no free-exercise-db
+ * (https://github.com/yuhonas/free-exercise-db, UNLICENSE).
+ *
+ * Usado pelo script `npm run images:fetch` que baixa as fotos start/end
+ * de cada exercício e grava em `data/exercise-images/{id}.jpg`. O server
+ * detecta esses arquivos no boot e popula `imagePath` automaticamente.
+ *
+ * Quando o nome exato não bater, o script tenta fuzzy-match normalizado.
+ */
+export const IMAGE_HINTS: Record<string, string> = {
+  // Peito
+  'ex-bench-press': 'Barbell_Bench_Press_-_Medium_Grip',
+  'ex-incline-db-press': 'Incline_Dumbbell_Press',
+  'ex-db-fly': 'Dumbbell_Flyes',
+  'ex-pec-deck': 'Butterfly',
+  'ex-pushup': 'Pushups',
+  'ex-dips': 'Dips_-_Chest_Version',
+  'ex-cable-crossover': 'Cable_Crossover',
+
+  // Costas
+  'ex-lat-pulldown': 'Wide-Grip_Lat_Pulldown',
+  'ex-bent-over-row': 'Bent_Over_Barbell_Row',
+  'ex-seated-row': 'Seated_Cable_Rows',
+  'ex-pullup': 'Pullups',
+  'ex-deadlift': 'Barbell_Deadlift',
+  'ex-db-row': 'One-Arm_Dumbbell_Row',
+  'ex-pullover': 'Bent-Arm_Dumbbell_Pullover',
+  'ex-shrug': 'Dumbbell_Shrug',
+
+  // Pernas
+  'ex-squat': 'Barbell_Squat',
+  'ex-leg-press': 'Leg_Press',
+  'ex-leg-extension': 'Leg_Extensions',
+  'ex-leg-curl': 'Lying_Leg_Curls',
+  'ex-stiff': 'Stiff-Legged_Dumbbell_Deadlift',
+  'ex-lunge': 'Dumbbell_Lunges',
+  'ex-bulgarian': 'Barbell_Lunge', // free-exercise-db não tem Bulgarian; lunge é o mais próximo
+  'ex-hip-thrust': 'Barbell_Hip_Thrust',
+  'ex-calf-standing': 'Standing_Calf_Raises',
+  'ex-calf-seated': 'Seated_Calf_Raise',
+
+  // Ombros
+  'ex-overhead-press': 'Standing_Military_Press',
+  'ex-db-shoulder-press': 'Seated_Dumbbell_Press',
+  'ex-lateral-raise': 'Side_Lateral_Raise',
+  'ex-front-raise': 'Front_Dumbbell_Raise',
+  'ex-rear-delt-fly': 'Reverse_Flyes',
+  'ex-face-pull': 'Face_Pull',
+
+  // Bíceps
+  'ex-barbell-curl': 'Barbell_Curl',
+  'ex-db-curl': 'Dumbbell_Bicep_Curl',
+  'ex-hammer-curl': 'Hammer_Curls',
+  'ex-preacher': 'Preacher_Curl',
+
+  // Tríceps
+  'ex-tri-pushdown': 'Triceps_Pushdown',
+  'ex-tri-skullcrusher': 'Lying_Triceps_Press',
+  'ex-tri-french': 'Seated_Triceps_Press',
+  'ex-bench-dip': 'Bench_Dips',
+  'ex-close-grip-bench': 'Close-Grip_Barbell_Bench_Press',
+
+  // Abdômen
+  'ex-crunch': 'Crunches',
+  'ex-leg-raise': 'Hanging_Leg_Raise',
+  'ex-plank': 'Plank',
+  'ex-cable-crunch': 'Cable_Crunch',
+}
+
 export interface SeedWorkoutTemplate {
   id: string
   name: string

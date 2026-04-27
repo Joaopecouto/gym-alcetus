@@ -83,6 +83,36 @@ docker compose restart         # reiniciar
 docker exec -it iron-track sh  # entrar no container
 ```
 
+## Imagens dos exercícios
+
+As 44 fotos vêm pré-baixadas do [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (UNLICENSE — livre pra uso comercial) e ficam commitadas no repo em `server/data/exercise-images/*.jpg` (~2.8MB total). Quando o container sobe, o boot detecta os arquivos e popula automaticamente o campo `imagePath` no banco — é só funcionar.
+
+### Adicionar mais imagens depois
+
+Se você criar exercícios customizados ou quiser substituir alguma foto:
+
+```bash
+# 1. Coloca o arquivo em /opt/iron-track/server/data/exercise-images/
+#    seguindo a convenção: <exercise-id>.jpg (ou .png/.gif/.webp)
+sudo cp minha-foto.jpg /opt/iron-track/server/data/exercise-images/ex-meu-id.jpg
+
+# 2. Reinicia o container (auto-detect roda no boot)
+cd /opt/iron-track && docker compose restart
+```
+
+### Re-baixar tudo (caso queira atualizar das fontes)
+
+Pra ambientes de dev (precisa de `tsx` instalado, ou seja, deps de dev):
+
+```bash
+cd server
+npm run images:fetch              # baixa tudo (substitui)
+npm run images:fetch -- --skip-existing   # só os faltantes
+npm run images:fetch:dry          # só lista o que faria, sem baixar
+```
+
+O mapping `IMAGE_HINTS` em `server/src/db/seed-data.ts` controla qual entry do free-exercise-db é usada pra cada exercício local.
+
 ## Custo / consumo
 
 Em VPS de 1GB RAM (plano básico Hostinger), idle:
