@@ -44,6 +44,11 @@ function AuthedRoutes() {
 
   return (
     <Routes>
+      {/* Se já tá logado e abriu /login (cache do PWA, link velho, refresh
+          após autenticar), manda pra home. Se não tiver isso, /login cai no
+          catch-all e mostra 404. */}
+      <Route path="/login" element={<Navigate to="/" replace />} />
+
       <Route path="/onboarding" element={<OnboardingRoute />} />
 
       {/* Rotas fullscreen (sem tab bar) */}
