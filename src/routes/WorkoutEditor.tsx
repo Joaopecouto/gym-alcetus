@@ -35,11 +35,21 @@ interface DraftExercise {
   repsMin: number
   repsMax: number
   restSeconds: number
+  durationSecondsTarget: number | null
+  distanceKmTarget: number | null
   notes: string
 }
 
 const HYP_DEFAULTS = { setsTarget: 4, repsMin: 8, repsMax: 12, restSeconds: 75 }
 const STR_DEFAULTS = { setsTarget: 5, repsMin: 3, repsMax: 6, restSeconds: 180 }
+const CARDIO_DEFAULTS = {
+  setsTarget: 1,
+  repsMin: 0,
+  repsMax: 0,
+  restSeconds: 0,
+  durationSecondsTarget: 30 * 60, // 30 min default
+  distanceKmTarget: null,
+}
 
 export function WorkoutEditorRoute() {
   const { id } = useParams()
@@ -72,6 +82,8 @@ export function WorkoutEditorRoute() {
           repsMin: e.repsMin,
           repsMax: e.repsMax,
           restSeconds: e.restSeconds,
+          durationSecondsTarget: e.durationSecondsTarget,
+          distanceKmTarget: e.distanceKmTarget,
           notes: e.notes,
         })),
       )
@@ -85,11 +97,14 @@ export function WorkoutEditorRoute() {
   }, [exercisesQ.data])
 
   function addExercise(exId: string) {
-    const defaults = mode === 'strength' ? STR_DEFAULTS : HYP_DEFAULTS
-    setDraft((d) => [
-      ...d,
-      { exerciseId: exId, ...defaults, notes: '' },
-    ])
+    const ex = exById.get(exId)
+    const isCardio = ex?.kind === 'cardio'
+    const defaults = isCardio
+      ? CARDIO_DEFAULTS
+      : mode === 'strength'
+        ? { ...STR_DEFAULTS, durationSecondsTarget: null, distanceKmTarget: null }
+        : { ...HYP_DEFAULTS, durationSecondsTarget: null, distanceKmTarget: null }
+    setDraft((d) => [...d, { exerciseId: exId, ...defaults, notes: '' }])
     setPicker(false)
   }
 
@@ -105,6 +120,8 @@ export function WorkoutEditorRoute() {
         repsMin: e.repsMin,
         repsMax: e.repsMax,
         restSeconds: e.restSeconds,
+        durationSecondsTarget: null,
+        distanceKmTarget: null,
         notes: '',
       })),
     )
@@ -249,6 +266,7 @@ export function WorkoutEditorRoute() {
             <ul className="mt-3 space-y-2">
               {draft.map((d, idx) => {
                 const ex = exById.get(d.exerciseId)
+                const isCardio = ex?.kind === 'cardio'
                 return (
                   <li
                     key={`${d.exerciseId}-${idx}`}
@@ -275,6 +293,7 @@ export function WorkoutEditorRoute() {
                             )?.namePt}{' '}
                             ·{' '}
                             {EQUIPMENT_LABELS[ex.equipment] ?? ex.equipment}
+                            {isCardio ? ' · Cardio' : ''}
                           </p>
                         ) : null}
                       </div>
@@ -288,36 +307,71 @@ export function WorkoutEditorRoute() {
                       </button>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-4 gap-2">
-                      <NumberField
-                        label="Séries"
-                        value={d.setsTarget}
-                        onChange={(v) =>
-                          updateExercise(idx, { setsTarget: v })
-                        }
-                      />
-                      <NumberField
-                        label="Reps min"
-                        value={d.repsMin}
-                        onChange={(v) =>
-                          updateExercise(idx, { repsMin: v })
-                        }
-                      />
-                      <NumberField
-                        label="Reps max"
-                        value={d.repsMax}
-                        onChange={(v) =>
-                          updateExercise(idx, { repsMax: v })
-                        }
-                      />
-                      <NumberField
-                        label="Descanso s"
-                        value={d.restSeconds}
-                        onChange={(v) =>
-                          updateExercise(idx, { restSeconds: v })
-                        }
-                      />
-                    </div>
+                    {isCardio ? (
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        <NumberField
+                          label="Intervalos"
+                          value={d.setsTarget}
+                          onChange={(v) =>
+                            updateExercise(idx, { setsTarget: v })
+                          }
+                        />
+                        <NumberField
+                          label="Duração (min)"
+                          value={
+                            d.durationSecondsTarget
+                              ? Math.round(d.durationSecondsTarget / 60)
+                              : 0
+                          }
+                          onChange={(v) =>
+                            updateExercise(idx, {
+                              durationSecondsTarget: v > 0 ? v * 60 : null,
+                            })
+                          }
+                        />
+                        <NumberField
+                          label="Dist. (km)"
+                          step={0.1}
+                          value={d.distanceKmTarget ?? 0}
+                          onChange={(v) =>
+                            updateExercise(idx, {
+                              distanceKmTarget: v > 0 ? v : null,
+                            })
+                          }
+                        />
+                      </div>
+                    ) : (
+                      <div className="mt-3 grid grid-cols-4 gap-2">
+                        <NumberField
+                          label="Séries"
+                          value={d.setsTarget}
+                          onChange={(v) =>
+                            updateExercise(idx, { setsTarget: v })
+                          }
+                        />
+                        <NumberField
+                          label="Reps min"
+                          value={d.repsMin}
+                          onChange={(v) =>
+                            updateExercise(idx, { repsMin: v })
+                          }
+                        />
+                        <NumberField
+                          label="Reps max"
+                          value={d.repsMax}
+                          onChange={(v) =>
+                            updateExercise(idx, { repsMax: v })
+                          }
+                        />
+                        <NumberField
+                          label="Descanso s"
+                          value={d.restSeconds}
+                          onChange={(v) =>
+                            updateExercise(idx, { restSeconds: v })
+                          }
+                        />
+                      </div>
+                    )}
                   </li>
                 )
               })}
@@ -375,10 +429,12 @@ function NumberField({
   label,
   value,
   onChange,
+  step,
 }: {
   label: string
   value: number
   onChange: (v: number) => void
+  step?: number
 }) {
   return (
     <label className="block">
@@ -387,8 +443,9 @@ function NumberField({
       </span>
       <input
         type="number"
-        inputMode="numeric"
+        inputMode={step ? 'decimal' : 'numeric'}
         value={value}
+        step={step}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
         className="mt-0.5 h-9 w-full rounded-md border border-input bg-background px-2 text-center text-sm tabular-nums"
       />

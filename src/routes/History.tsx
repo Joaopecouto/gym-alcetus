@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useQueries } from '@tanstack/react-query'
 import {
   endOfDay,
   endOfMonth,
@@ -12,12 +13,15 @@ import {
   startOfYear,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { CalendarDays, Clock, Dumbbell, Flame, Weight } from 'lucide-react'
+import { CalendarDays, Clock, Dumbbell, Flame, Target, Weight } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { useSessions } from '@/features/sessions/queries'
 import { useWorkouts } from '@/features/workouts/queries'
+import { useExercises, useMuscleGroups } from '@/features/exercises/queries'
+import { api } from '@/lib/api'
+import { queryKeys } from '@/lib/query'
 import { cn } from '@/lib/utils'
-import type { Session } from '@/types'
+import { MUSCLE_COLORS, type Session, type SessionWithSets } from '@/types'
 
 type RangeKey = 'today' | 'week' | 'month' | 'year' | 'all'
 
@@ -50,6 +54,8 @@ function rangeBounds(key: RangeKey, now = new Date()) {
 export function HistoryRoute() {
   const sessionsQ = useSessions()
   const workoutsQ = useWorkouts()
+  const exercisesQ = useExercises()
+  const musclesQ = useMuscleGroups()
   const [range, setRange] = useState<RangeKey>('week')
 
   const filtered = useMemo(() => {
@@ -59,6 +65,24 @@ export function HistoryRoute() {
       return s.finishedAt >= from.getTime() && s.finishedAt <= to.getTime()
     })
   }, [sessionsQ.data, range])
+
+  // Carrega séries de cada sessão filtrada (pra calcular músculo top)
+  const setsResults = useQueries({
+    queries: filtered.map((s) => ({
+      queryKey: queryKeys.session(s.id),
+      queryFn: () => api.getSession(s.id),
+      staleTime: 60_000,
+    })),
+  })
+  const sessionsWithSets = setsResults
+    .map((r) => r.data)
+    .filter((s): s is SessionWithSets => !!s)
+
+  const topMuscle = useMemo(
+    () =>
+      computeTopMuscle(sessionsWithSets, exercisesQ.data ?? []),
+    [sessionsWithSets, exercisesQ.data],
+  )
 
   const stats = useMemo(() => computeStats(filtered), [filtered])
   const workoutById = useMemo(
@@ -118,6 +142,46 @@ export function HistoryRoute() {
           value={`${stats.streak}d`}
         />
       </div>
+
+      {topMuscle ? (
+        <div className="mt-3 px-4">
+          <div
+            className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+            style={{
+              borderLeftWidth: 4,
+              borderLeftColor:
+                MUSCLE_COLORS[topMuscle.muscleId] ?? '#64748b',
+            }}
+          >
+            <div
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg text-white"
+              style={{
+                backgroundColor:
+                  MUSCLE_COLORS[topMuscle.muscleId] ?? '#64748b',
+              }}
+            >
+              <Target className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Músculo mais treinado
+              </p>
+              <p className="font-medium">
+                {musclesQ.data?.find((m) => m.id === topMuscle.muscleId)
+                  ?.namePt ?? topMuscle.muscleId}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-base font-semibold tabular-nums">
+                {topMuscle.sets} séries
+              </p>
+              <p className="text-xs text-muted-foreground tabular-nums">
+                {Math.round(topMuscle.volumeKg)}kg
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 px-4">
         <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
@@ -216,6 +280,36 @@ function computeStats(sessions: Session[]) {
   )
   const streak = computeStreak(sessions)
   return { count, volume, durationSec, streak }
+}
+
+function computeTopMuscle(
+  sessions: SessionWithSets[],
+  exercises: { id: string; primaryMuscleId: string }[],
+): { muscleId: string; sets: number; volumeKg: number } | null {
+  const exMuscle = new Map(exercises.map((e) => [e.id, e.primaryMuscleId]))
+  const counts = new Map<string, { sets: number; volumeKg: number }>()
+  for (const s of sessions) {
+    for (const set of s.sets) {
+      if (!set.completed) continue
+      const muscleId = exMuscle.get(set.exerciseId)
+      if (!muscleId) continue
+      const cur = counts.get(muscleId) ?? { sets: 0, volumeKg: 0 }
+      cur.sets += 1
+      cur.volumeKg += set.weightKg * set.reps
+      counts.set(muscleId, cur)
+    }
+  }
+  if (counts.size === 0) return null
+  let topMuscleId = ''
+  let topSets = -1
+  for (const [muscleId, c] of counts) {
+    if (c.sets > topSets) {
+      topSets = c.sets
+      topMuscleId = muscleId
+    }
+  }
+  const top = counts.get(topMuscleId)!
+  return { muscleId: topMuscleId, sets: top.sets, volumeKg: top.volumeKg }
 }
 
 function computeStreak(sessions: Session[]): number {

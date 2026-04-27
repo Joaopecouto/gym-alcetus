@@ -46,6 +46,7 @@ try {
           id: e.id,
           ownerId: null,
           name: e.name,
+          kind: e.kind ?? 'strength',
           primaryMuscleId: e.primaryMuscle,
           secondaryMuscles: e.secondaryMuscles,
           equipment: e.equipment,
@@ -57,6 +58,40 @@ try {
         .onConflictDoNothing()
     }
     app.log.info(`seed ok: ${EXERCISES.length} exercícios`)
+  } else {
+    // Catálogo já existe — garante que muscle groups novos (ex: cardio) e
+    // exercícios novos sejam adicionados sem regravar os existentes.
+    // ORDEM IMPORTA: muscle groups antes dos exercícios (FK).
+    for (const mg of MUSCLE_GROUPS) {
+      await db.insert(schema.muscleGroups).values(mg).onConflictDoNothing()
+    }
+    const knownIds = new Set(
+      (
+        await db.select({ id: schema.exercises.id }).from(schema.exercises)
+      ).map((r) => r.id),
+    )
+    const newOnes = EXERCISES.filter((e) => !knownIds.has(e.id))
+    if (newOnes.length > 0) {
+      app.log.info(`seed delta: adicionando ${newOnes.length} novos exercícios`)
+      for (const e of newOnes) {
+        await db
+          .insert(schema.exercises)
+          .values({
+            id: e.id,
+            ownerId: null,
+            name: e.name,
+            kind: e.kind ?? 'strength',
+            primaryMuscleId: e.primaryMuscle,
+            secondaryMuscles: e.secondaryMuscles,
+            equipment: e.equipment,
+            difficulty: e.difficulty,
+            instructions: e.instructions,
+            imagePath: null,
+            isCustom: false,
+          })
+          .onConflictDoNothing()
+      }
+    }
   }
 
   // Auto-detecta imagens em config.exerciseImagesDir e popula imagePath.

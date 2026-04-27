@@ -11,6 +11,7 @@ export const MUSCLE_GROUPS = [
   { id: 'abs', name: 'Abs', namePt: 'Abdômen' },
   { id: 'traps', name: 'Traps', namePt: 'Trapézio' },
   { id: 'forearms', name: 'Forearms', namePt: 'Antebraços' },
+  { id: 'cardio', name: 'Cardio', namePt: 'Cardio' },
 ] as const
 
 export type Equipment =
@@ -25,6 +26,8 @@ export type Equipment =
 export interface SeedExercise {
   id: string
   name: string
+  /** 'strength' (default) ou 'cardio' (registra duração + distância) */
+  kind?: 'strength' | 'cardio'
   primaryMuscle: string
   secondaryMuscles: string[]
   equipment: Equipment
@@ -90,6 +93,14 @@ export const EXERCISES: SeedExercise[] = [
   { id: 'ex-leg-raise', name: 'Elevação de pernas', primaryMuscle: 'abs', secondaryMuscles: [], equipment: 'bodyweight', difficulty: 'intermediate', instructions: 'Deitado, mãos ao lado do corpo. Eleve as pernas estendidas até 90°, desça controlado sem encostar no chão.' },
   { id: 'ex-plank', name: 'Prancha', primaryMuscle: 'abs', secondaryMuscles: ['shoulders', 'glutes'], equipment: 'bodyweight', difficulty: 'beginner', instructions: 'Antebraços e ponta dos pés no chão, corpo reto. Mantenha a posição contraindo abdômen e glúteos.' },
   { id: 'ex-cable-crunch', name: 'Abdominal na polia', primaryMuscle: 'abs', secondaryMuscles: [], equipment: 'cable', difficulty: 'intermediate', instructions: 'Ajoelhado de frente para a polia alta, corda atrás da cabeça. Flexione o tronco contraindo o abdômen.' },
+
+  // ===== Cardio =====
+  { id: 'ex-treadmill', name: 'Esteira (corrida)', kind: 'cardio', primaryMuscle: 'cardio', secondaryMuscles: ['quads', 'calves'], equipment: 'machine', difficulty: 'beginner', instructions: 'Aquecer 5min em ritmo leve, subir intensidade gradualmente. Mantenha postura ereta, olhar à frente. Use a inclinação pra simular ladeira sem aumentar muito a velocidade.' },
+  { id: 'ex-stationary-bike', name: 'Bike ergométrica', kind: 'cardio', primaryMuscle: 'cardio', secondaryMuscles: ['quads', 'glutes'], equipment: 'machine', difficulty: 'beginner', instructions: 'Ajuste a altura do banco (joelho com leve flexão no ponto mais baixo do pedal). Mãos relaxadas no guidão. Cadência 60–90 rpm.' },
+  { id: 'ex-elliptical', name: 'Elíptico', kind: 'cardio', primaryMuscle: 'cardio', secondaryMuscles: ['quads', 'glutes', 'shoulders'], equipment: 'machine', difficulty: 'beginner', instructions: 'Pés totalmente apoiados, postura ereta, ombros relaxados. Movimento sincronizado de braços e pernas. Não trave os joelhos.' },
+  { id: 'ex-jump-rope', name: 'Pular corda', kind: 'cardio', primaryMuscle: 'cardio', secondaryMuscles: ['calves', 'shoulders'], equipment: 'bodyweight', difficulty: 'intermediate', instructions: 'Pequenos saltos com a ponta dos pés, joelhos levemente flexionados. Pulsos giram a corda — ombros relaxados. Pode alternar com saltos duplos.' },
+  { id: 'ex-rowing', name: 'Remo ergômetro', kind: 'cardio', primaryMuscle: 'cardio', secondaryMuscles: ['back', 'quads', 'biceps'], equipment: 'machine', difficulty: 'intermediate', instructions: 'Sequência: pernas → quadril → braços (na puxada) e o inverso na volta. Mantenha as costas neutras. Cadência 24–28 puxadas/min.' },
+  { id: 'ex-walking', name: 'Caminhada', kind: 'cardio', primaryMuscle: 'cardio', secondaryMuscles: ['quads', 'calves'], equipment: 'bodyweight', difficulty: 'beginner', instructions: 'Postura ereta, passada confortável, braços acompanhando. Bom pra zona 2 (FCmáx 60–70%). Indoor ou ao ar livre.' },
 ]
 
 /**
@@ -160,6 +171,14 @@ export const IMAGE_HINTS: Record<string, string> = {
   'ex-leg-raise': 'Hanging_Leg_Raise',
   'ex-plank': 'Plank',
   'ex-cable-crunch': 'Cable_Crunch',
+
+  // Cardio
+  'ex-treadmill': 'Running_Treadmill',
+  'ex-stationary-bike': 'Bicycling_Stationary',
+  'ex-elliptical': 'Elliptical_Trainer',
+  'ex-jump-rope': 'Rope_Jumping',
+  'ex-rowing': 'Rowing_Stationary',
+  'ex-walking': 'Walking_Treadmill',
 }
 
 export interface SeedWorkoutTemplate {

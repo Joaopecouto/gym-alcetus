@@ -28,6 +28,9 @@ import { EQUIPMENT_LABELS, type Exercise, MUSCLE_COLORS } from '@/types'
 interface SetDraft {
   weightKg: string
   reps: string
+  // pra cardio: minutos como decimal (30 = 30min, 1.5 = 1m30s)
+  durationMinutes: string
+  distanceKm: string
   completed: boolean
   completedAt: number | null
 }
@@ -40,6 +43,8 @@ interface ExerciseDraft {
   setsTarget: number
   repsMin: number
   repsMax: number
+  durationSecondsTarget: number | null
+  distanceKmTarget: number | null
 }
 
 type Mode = 'set' | 'rest'
@@ -83,9 +88,13 @@ export function SessionExecuteRoute() {
         setsTarget: we.setsTarget,
         repsMin: we.repsMin,
         repsMax: we.repsMax,
+        durationSecondsTarget: we.durationSecondsTarget,
+        distanceKmTarget: we.distanceKmTarget,
         sets: Array.from({ length: we.setsTarget }, () => ({
           weightKg: '',
           reps: '',
+          durationMinutes: '',
+          distanceKm: '',
           completed: false,
           completedAt: null,
         })),
@@ -142,6 +151,8 @@ export function SessionExecuteRoute() {
                 {
                   weightKg: ex.sets.at(-1)?.weightKg ?? '',
                   reps: ex.sets.at(-1)?.reps ?? '',
+                  durationMinutes: ex.sets.at(-1)?.durationMinutes ?? '',
+                  distanceKm: ex.sets.at(-1)?.distanceKm ?? '',
                   completed: false,
                   completedAt: null,
                 },
@@ -205,6 +216,8 @@ export function SessionExecuteRoute() {
         setNumber: number
         weightKg: number
         reps: number
+        durationSeconds: number | null
+        distanceKm: number | null
         rpe?: number | null
         completed: boolean
         completedAt?: number | null
@@ -214,12 +227,17 @@ export function SessionExecuteRoute() {
         ex.sets.forEach((s, idx) => {
           const w = Number(s.weightKg) || 0
           const r = Number(s.reps) || 0
+          const durMin = Number(s.durationMinutes) || 0
+          const distKm = Number(s.distanceKm) || 0
+          const dur = durMin > 0 ? Math.round(durMin * 60) : null
           if (s.completed && w > 0 && r > 0) totalVolume += w * r
           sets.push({
             exerciseId: ex.exerciseId,
             setNumber: idx + 1,
             weightKg: w,
             reps: r,
+            durationSeconds: dur,
+            distanceKm: distKm > 0 ? distKm : null,
             rpe: null,
             completed: s.completed,
             completedAt: s.completedAt,
@@ -388,9 +406,20 @@ function SetView({
   onSkipExercise: () => void
   onJumpToSet: (idx: number) => void
 }) {
+  const isCardio = currentExercise.kind === 'cardio'
   const w = Number(currentSet.weightKg) || 0
   const r = Number(currentSet.reps) || 0
-  const oneRm = w && r ? Math.round(estimate1RM(w, r)) : null
+  const oneRm = !isCardio && w && r ? Math.round(estimate1RM(w, r)) : null
+
+  // alvo
+  const target = isCardio
+    ? formatCardioTarget(current.durationSecondsTarget, current.distanceKmTarget)
+    : `${current.repsMin}–${current.repsMax} reps`
+
+  // Habilita "Concluir" quando: strength precisa peso+reps; cardio precisa duração ou distância
+  const canComplete = isCardio
+    ? !!(currentSet.durationMinutes || currentSet.distanceKm)
+    : !!(currentSet.weightKg && currentSet.reps)
 
   return (
     <div className="px-4 pt-4">
@@ -406,6 +435,7 @@ function SetView({
           style={{ color: muscleColor }}
         >
           {muscleName} · {equipmentLabel}
+          {isCardio ? ' · CARDIO' : ''}
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">
           {currentExercise.name}
@@ -421,7 +451,7 @@ function SetView({
         </p>
       </details>
 
-      {/* Mini chips de série pra ver progresso e pular */}
+      {/* Mini chips de série/intervalo */}
       <div className="mt-4 flex items-center gap-1.5">
         {current.sets.map((s, i) => (
           <button
@@ -436,7 +466,7 @@ function SetView({
                   ? 'bg-primary/15 text-primary'
                   : 'border border-border text-muted-foreground',
             )}
-            aria-label={`Série ${i + 1}`}
+            aria-label={`${isCardio ? 'Intervalo' : 'Série'} ${i + 1}`}
           >
             {s.completed ? <Check className="size-3.5" /> : i + 1}
           </button>
@@ -445,7 +475,7 @@ function SetView({
           type="button"
           onClick={onAddSet}
           className="ml-1 flex size-7 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground hover:bg-accent"
-          aria-label="Adicionar série"
+          aria-label={isCardio ? 'Adicionar intervalo' : 'Adicionar série'}
         >
           <Plus className="size-3.5" />
         </button>
@@ -455,46 +485,90 @@ function SetView({
       <div className="mt-4 rounded-2xl border border-border bg-card p-5">
         <div className="flex items-baseline justify-between">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Série {setIdx + 1} de {current.sets.length}
+            {isCardio ? 'Intervalo' : 'Série'} {setIdx + 1} de {current.sets.length}
           </p>
-          <p className="text-xs text-muted-foreground">
-            alvo: {current.repsMin}–{current.repsMax} reps
-          </p>
+          <p className="text-xs text-muted-foreground">alvo: {target}</p>
         </div>
 
-        <div className="mt-3 flex items-end gap-3">
-          <div className="flex-1">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Peso (kg)
-            </label>
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="0"
-              value={currentSet.weightKg}
-              onChange={(e) => onUpdateSet({ weightKg: e.target.value })}
-              className="h-14 w-full rounded-lg border border-input bg-background px-3 text-2xl font-semibold tabular-nums"
-            />
+        {isCardio ? (
+          <div className="mt-3 flex items-end gap-3">
+            <div className="flex-1">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Duração (min)
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                step="0.5"
+                value={currentSet.durationMinutes}
+                onChange={(e) =>
+                  onUpdateSet({ durationMinutes: e.target.value })
+                }
+                className="h-14 w-full rounded-lg border border-input bg-background px-3 text-2xl font-semibold tabular-nums"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Distância (km)
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                step="0.1"
+                value={currentSet.distanceKm}
+                onChange={(e) => onUpdateSet({ distanceKm: e.target.value })}
+                className="h-14 w-full rounded-lg border border-input bg-background px-3 text-2xl font-semibold tabular-nums"
+              />
+            </div>
           </div>
-          <span className="pb-3 text-2xl text-muted-foreground">×</span>
-          <div className="flex-1">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Reps
-            </label>
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="0"
-              value={currentSet.reps}
-              onChange={(e) => onUpdateSet({ reps: e.target.value })}
-              className="h-14 w-full rounded-lg border border-input bg-background px-3 text-2xl font-semibold tabular-nums"
-            />
+        ) : (
+          <div className="mt-3 flex items-end gap-3">
+            <div className="flex-1">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Peso (kg)
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={currentSet.weightKg}
+                onChange={(e) => onUpdateSet({ weightKg: e.target.value })}
+                className="h-14 w-full rounded-lg border border-input bg-background px-3 text-2xl font-semibold tabular-nums"
+              />
+            </div>
+            <span className="pb-3 text-2xl text-muted-foreground">×</span>
+            <div className="flex-1">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Reps
+              </label>
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder="0"
+                value={currentSet.reps}
+                onChange={(e) => onUpdateSet({ reps: e.target.value })}
+                className="h-14 w-full rounded-lg border border-input bg-background px-3 text-2xl font-semibold tabular-nums"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {oneRm ? (
           <p className="mt-2 text-center text-xs text-muted-foreground">
             ≈ {oneRm}kg de 1RM estimado
+          </p>
+        ) : null}
+
+        {isCardio && currentSet.durationMinutes && currentSet.distanceKm ? (
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            ≈{' '}
+            {(
+              Number(currentSet.distanceKm) /
+              (Number(currentSet.durationMinutes) / 60)
+            ).toFixed(1)}{' '}
+            km/h
           </p>
         ) : null}
       </div>
@@ -502,27 +576,38 @@ function SetView({
       {/* Botões grandes */}
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 backdrop-blur safe-bottom">
         <div className="mx-auto flex max-w-2xl items-center gap-2 p-3">
-          <Button
-            variant="ghost"
-            onClick={onSkipExercise}
-            className="flex-1"
-          >
+          <Button variant="ghost" onClick={onSkipExercise} className="flex-1">
             <SkipForward className="size-4" />
             Pular exerc.
           </Button>
           <Button
             onClick={onComplete}
-            disabled={!currentSet.weightKg || !currentSet.reps}
+            disabled={!canComplete}
             className="flex-[2]"
             size="lg"
           >
             <Check className="size-4" />
-            Concluir série
+            {isCardio ? 'Concluir intervalo' : 'Concluir série'}
           </Button>
         </div>
       </div>
     </div>
   )
+}
+
+function formatCardioTarget(
+  durationSeconds: number | null,
+  distanceKm: number | null,
+): string {
+  const parts: string[] = []
+  if (durationSeconds && durationSeconds > 0) {
+    const min = Math.round(durationSeconds / 60)
+    parts.push(`${min} min`)
+  }
+  if (distanceKm && distanceKm > 0) {
+    parts.push(`${distanceKm} km`)
+  }
+  return parts.length > 0 ? parts.join(' · ') : 'sem alvo'
 }
 
 function RestView({

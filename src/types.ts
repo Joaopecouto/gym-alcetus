@@ -39,10 +39,13 @@ export interface MuscleGroup {
   namePt: string
 }
 
+export type ExerciseKind = 'strength' | 'cardio'
+
 export interface Exercise {
   id: string
   ownerId: string | null
   name: string
+  kind: ExerciseKind
   primaryMuscleId: string
   secondaryMuscles: string[]
   equipment: string
@@ -75,6 +78,9 @@ export interface WorkoutExercise {
   repsMax: number
   restSeconds: number
   weightTargetKg: number | null
+  // Cardio
+  durationSecondsTarget: number | null
+  distanceKmTarget: number | null
   notes: string
 }
 
@@ -94,6 +100,8 @@ export interface WorkoutInput {
     repsMax: number
     restSeconds: number
     weightTargetKg?: number | null
+    durationSecondsTarget?: number | null
+    distanceKmTarget?: number | null
     notes?: string
   }>
 }
@@ -168,6 +176,8 @@ export interface SessionSet {
   setNumber: number
   weightKg: number
   reps: number
+  durationSeconds: number | null
+  distanceKm: number | null
   rpe: number | null
   completed: boolean
   isPr: boolean
@@ -191,6 +201,7 @@ export const MUSCLE_COLORS: Record<string, string> = {
   abs: '#ca8a04',
   traps: '#0891b2',
   forearms: '#65a30d',
+  cardio: '#06b6d4',
 }
 
 export const EQUIPMENT_LABELS: Record<string, string> = {

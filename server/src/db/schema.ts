@@ -47,6 +47,10 @@ export const exercises = sqliteTable('exercises', {
   // Owner: null for system/seeded exercises, userId for custom ones
   ownerId: text('owner_id').references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
+  // Tipo: 'strength' = peso × reps; 'cardio' = duração + distância
+  kind: text('kind', { enum: ['strength', 'cardio'] })
+    .notNull()
+    .default('strength'),
   primaryMuscleId: text('primary_muscle_id')
     .notNull()
     .references(() => muscleGroups.id),
@@ -103,6 +107,9 @@ export const workoutExercises = sqliteTable('workout_exercises', {
   repsMax: integer('reps_max').notNull(),
   restSeconds: integer('rest_seconds').notNull(),
   weightTargetKg: real('weight_target_kg'),
+  // Pra exercícios de cardio: alvo de duração e distância por "série" (intervalo).
+  durationSecondsTarget: integer('duration_seconds_target'),
+  distanceKmTarget: real('distance_km_target'),
   notes: text('notes').notNull().default(''),
 })
 
@@ -154,6 +161,9 @@ export const sessionSets = sqliteTable('session_sets', {
   setNumber: integer('set_number').notNull(),
   weightKg: real('weight_kg').notNull(),
   reps: integer('reps').notNull(),
+  // Pra cardio: duração efetiva e distância percorrida no intervalo
+  durationSeconds: integer('duration_seconds'),
+  distanceKm: real('distance_km'),
   rpe: real('rpe'),
   completed: integer('completed', { mode: 'boolean' }).notNull().default(false),
   isPr: integer('is_pr', { mode: 'boolean' }).notNull().default(false),

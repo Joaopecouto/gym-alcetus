@@ -15,6 +15,7 @@ async function seed() {
         id: e.id,
         ownerId: null,
         name: e.name,
+        kind: e.kind ?? 'strength',
         primaryMuscleId: e.primaryMuscle,
         secondaryMuscles: e.secondaryMuscles,
         equipment: e.equipment,

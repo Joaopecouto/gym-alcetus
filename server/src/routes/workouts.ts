@@ -8,10 +8,12 @@ import { requireAuth } from '../auth/middleware.js'
 const WorkoutExerciseInput = z.object({
   exerciseId: z.string().min(1),
   setsTarget: z.number().int().min(1).max(20),
-  repsMin: z.number().int().min(1).max(50),
-  repsMax: z.number().int().min(1).max(50),
-  restSeconds: z.number().int().min(0).max(600),
+  repsMin: z.number().int().min(0).max(50),
+  repsMax: z.number().int().min(0).max(50),
+  restSeconds: z.number().int().min(0).max(3600),
   weightTargetKg: z.number().nullable().optional(),
+  durationSecondsTarget: z.number().int().min(0).max(7200).nullable().optional(),
+  distanceKmTarget: z.number().min(0).max(100).nullable().optional(),
   notes: z.string().max(300).default(''),
 })
 
@@ -125,6 +127,8 @@ export async function workoutRoutes(app: FastifyInstance) {
           repsMax: e.repsMax,
           restSeconds: e.restSeconds,
           weightTargetKg: e.weightTargetKg ?? null,
+          durationSecondsTarget: e.durationSecondsTarget ?? null,
+          distanceKmTarget: e.distanceKmTarget ?? null,
           notes: e.notes,
         }))
         await tx.insert(schema.workoutExercises).values(exRows)
@@ -182,6 +186,8 @@ export async function workoutRoutes(app: FastifyInstance) {
           repsMax: e.repsMax,
           restSeconds: e.restSeconds,
           weightTargetKg: e.weightTargetKg ?? null,
+          durationSecondsTarget: e.durationSecondsTarget ?? null,
+          distanceKmTarget: e.distanceKmTarget ?? null,
           notes: e.notes,
         }))
         await tx.insert(schema.workoutExercises).values(exRows)

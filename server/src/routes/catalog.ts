@@ -8,6 +8,7 @@ import { requireAuth } from '../auth/middleware.js'
 
 const CustomExerciseBody = z.object({
   name: z.string().min(1).max(80),
+  kind: z.enum(['strength', 'cardio']).optional().default('strength'),
   primaryMuscleId: z.string().min(1),
   secondaryMuscles: z.array(z.string()).default([]),
   equipment: z.string().min(1),
@@ -75,6 +76,7 @@ export async function catalogRoutes(app: FastifyInstance) {
         id,
         ownerId: req.user!.id,
         name: parsed.data.name,
+        kind: parsed.data.kind,
         primaryMuscleId: parsed.data.primaryMuscleId,
         secondaryMuscles: parsed.data.secondaryMuscles,
         equipment: parsed.data.equipment,

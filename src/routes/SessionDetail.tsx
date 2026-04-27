@@ -1,22 +1,39 @@
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Clock, Weight } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft, Clock, Trash2, Weight } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { Button } from '@/components/ui/Button'
+import { Dialog } from '@/components/ui/Dialog'
 import { useSession } from '@/features/sessions/queries'
 import { useWorkout } from '@/features/workouts/queries'
 import {
   useExercises,
   useMuscleGroups,
 } from '@/features/exercises/queries'
+import { api } from '@/lib/api'
+import { queryKeys } from '@/lib/query'
 import { MUSCLE_COLORS } from '@/types'
 import { estimate1RM } from '@/lib/calc-1rm'
 
 export function SessionDetailRoute() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const qc = useQueryClient()
   const sessionQ = useSession(id)
   const workoutQ = useWorkout(sessionQ.data?.workoutId)
   const exercisesQ = useExercises()
   const musclesQ = useMuscleGroups()
+  const [confirmDel, setConfirmDel] = useState(false)
+
+  const del = useMutation({
+    mutationFn: () => api.deleteSession(id!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.sessions })
+      navigate('/history')
+    },
+  })
 
   if (sessionQ.isLoading || !sessionQ.data) {
     return (
@@ -50,6 +67,14 @@ export function SessionDetailRoute() {
         >
           <ArrowLeft className="size-5" />
         </Link>
+        <button
+          type="button"
+          onClick={() => setConfirmDel(true)}
+          className="ml-auto inline-flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          aria-label="Apagar sessão"
+        >
+          <Trash2 className="size-4" />
+        </button>
       </div>
 
       <div className="px-4 pt-3">
@@ -110,8 +135,9 @@ export function SessionDetailRoute() {
               </div>
               <ul className="mt-2 space-y-1">
                 {sets.map((set) => {
+                  const isCardio = ex.kind === 'cardio'
                   const oneRm =
-                    set.weightKg && set.reps
+                    !isCardio && set.weightKg && set.reps
                       ? Math.round(estimate1RM(set.weightKg, set.reps))
                       : null
                   return (
@@ -122,9 +148,20 @@ export function SessionDetailRoute() {
                       <span className="size-6 text-center text-xs text-muted-foreground">
                         {set.setNumber}
                       </span>
-                      <span className="tabular-nums">
-                        {set.weightKg}kg × {set.reps}
-                      </span>
+                      {isCardio ? (
+                        <span className="tabular-nums">
+                          {set.durationSeconds
+                            ? `${Math.round(set.durationSeconds / 60)} min`
+                            : '—'}
+                          {set.distanceKm
+                            ? ` · ${set.distanceKm} km`
+                            : ''}
+                        </span>
+                      ) : (
+                        <span className="tabular-nums">
+                          {set.weightKg}kg × {set.reps}
+                        </span>
+                      )}
                       {oneRm ? (
                         <span className="ml-auto text-xs text-muted-foreground">
                           ≈{oneRm}kg 1RM
@@ -143,6 +180,27 @@ export function SessionDetailRoute() {
           )
         })}
       </ul>
+
+      <Dialog
+        open={confirmDel}
+        onClose={() => setConfirmDel(false)}
+        title="Apagar essa sessão?"
+        description="A sessão e todas as séries dela somem do histórico. Não dá pra desfazer."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDel(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => del.mutate()}
+              disabled={del.isPending}
+            >
+              {del.isPending ? 'Apagando…' : 'Apagar'}
+            </Button>
+          </>
+        }
+      />
     </div>
   )
 }

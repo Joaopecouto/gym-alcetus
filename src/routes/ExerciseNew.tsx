@@ -8,7 +8,7 @@ import {
   useCreateCustomExercise,
   useMuscleGroups,
 } from '@/features/exercises/queries'
-import { EQUIPMENT_LABELS, type Level } from '@/types'
+import { EQUIPMENT_LABELS, type ExerciseKind, type Level } from '@/types'
 
 const LEVELS: Array<{ value: Level; label: string }> = [
   { value: 'beginner', label: 'Iniciante' },
@@ -22,6 +22,7 @@ export function ExerciseNewRoute() {
   const create = useCreateCustomExercise()
 
   const [name, setName] = useState('')
+  const [kind, setKind] = useState<ExerciseKind>('strength')
   const [primaryMuscleId, setPrimary] = useState('')
   const [equipment, setEquipment] = useState('bodyweight')
   const [difficulty, setDifficulty] = useState<Level>('beginner')
@@ -45,6 +46,7 @@ export function ExerciseNewRoute() {
     try {
       const ex = await create.mutateAsync({
         name: name.trim(),
+        kind,
         primaryMuscleId,
         secondaryMuscles: [],
         equipment,
@@ -80,6 +82,34 @@ export function ExerciseNewRoute() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Flexão diamante"
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Tipo</Label>
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
+            <button
+              type="button"
+              onClick={() => setKind('strength')}
+              className={
+                kind === 'strength'
+                  ? 'rounded-md bg-background py-2 text-sm shadow-sm'
+                  : 'rounded-md py-2 text-sm text-muted-foreground'
+              }
+            >
+              Musculação
+            </button>
+            <button
+              type="button"
+              onClick={() => setKind('cardio')}
+              className={
+                kind === 'cardio'
+                  ? 'rounded-md bg-background py-2 text-sm shadow-sm'
+                  : 'rounded-md py-2 text-sm text-muted-foreground'
+              }
+            >
+              Cardio
+            </button>
+          </div>
         </div>
 
         <div className="space-y-1.5">
