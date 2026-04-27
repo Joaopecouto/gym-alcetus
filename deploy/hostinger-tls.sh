@@ -21,38 +21,69 @@ if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
 fi
 
 REPO_DIR="/opt/gym-alcetus"
-CONF_SRC="$REPO_DIR/deploy/nginx-gym-alcetus.conf"
+CONF_FINAL_SRC="$REPO_DIR/deploy/nginx-gym-alcetus.conf"
 CONF_DST="/etc/nginx/sites-available/gym-alcetus"
+CONF_LINK="/etc/nginx/sites-enabled/gym-alcetus"
 
 echo "==> Instalando nginx + certbot"
 apt-get update -y
 apt-get install -y nginx certbot python3-certbot-nginx
 mkdir -p /var/www/letsencrypt
 
-echo "==> Aplicando config nginx pra $DOMAIN"
-sed "s|SEU_DOMINIO|$DOMAIN|g" "$CONF_SRC" > "$CONF_DST"
-ln -sf "$CONF_DST" /etc/nginx/sites-enabled/gym-alcetus
+echo "==> Limpando config nginx anterior (se existir)"
+rm -f "$CONF_LINK"
 rm -f /etc/nginx/sites-enabled/default
 
-# Primeira reload só com o bloco HTTP (sem TLS ainda — ssl_certificate aponta
-# pra arquivo que não existe). Vamos comentar o bloco 443 temporariamente.
-TMP_CONF=$(mktemp)
-awk 'BEGIN{p=1} /listen 443/{p=0} /^}/ && p==0 {p=1; next} p' "$CONF_DST" > "$TMP_CONF"
-mv "$TMP_CONF" "$CONF_DST"
-nginx -t && systemctl reload nginx
+# -----------------------------------------------------------------------------
+# Etapa 1: bootstrap — só HTTP, sem TLS, pro certbot validar o ACME challenge
+# -----------------------------------------------------------------------------
+echo "==> Aplicando config bootstrap (HTTP only) pra $DOMAIN"
+cat > "$CONF_DST" <<EOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $DOMAIN;
 
-echo "==> Solicitando cert TLS via certbot"
-certbot --nginx \
+    location /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+    }
+
+    location / {
+        return 200 'bootstrap';
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+
+ln -sf "$CONF_DST" "$CONF_LINK"
+nginx -t
+systemctl reload nginx
+
+# -----------------------------------------------------------------------------
+# Etapa 2: certbot pega o cert TLS (modo standalone via webroot)
+# -----------------------------------------------------------------------------
+echo "==> Solicitando certificado TLS via Let's Encrypt"
+certbot certonly \
+  --webroot \
+  -w /var/www/letsencrypt \
   -d "$DOMAIN" \
   --non-interactive \
   --agree-tos \
-  -m "$EMAIL" \
-  --redirect
+  -m "$EMAIL"
 
+# -----------------------------------------------------------------------------
+# Etapa 3: aplica config final (HTTP→HTTPS redirect + reverse proxy 443)
+# -----------------------------------------------------------------------------
 echo "==> Aplicando config final (HTTP→HTTPS + reverse proxy)"
-sed "s|SEU_DOMINIO|$DOMAIN|g" "$CONF_SRC" > "$CONF_DST"
-nginx -t && systemctl reload nginx
+sed "s|SEU_DOMINIO|$DOMAIN|g" "$CONF_FINAL_SRC" > "$CONF_DST"
+nginx -t
+systemctl reload nginx
+
+# -----------------------------------------------------------------------------
+# Etapa 4: renovação automática (já vem habilitada via systemd timer do certbot)
+# -----------------------------------------------------------------------------
+systemctl enable --now certbot.timer >/dev/null 2>&1 || true
 
 echo
 echo "TLS pronto. Acesse: https://$DOMAIN"
-echo "Renovação automática já vem via cron do certbot."
+echo "Renovação automática rodando via systemd timer (certbot.timer)."
