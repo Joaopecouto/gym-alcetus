@@ -15,6 +15,13 @@
       "when": 1777309769957,
       "tag": "0001_exotic_havok",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777312382309,
+      "tag": "0002_optimal_midnight",
+      "breakpoints": true
     }
   ]
 }

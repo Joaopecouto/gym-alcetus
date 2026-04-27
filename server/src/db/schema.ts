@@ -100,7 +100,7 @@ export const workoutExercises = sqliteTable('workout_exercises', {
     .references(() => workouts.id, { onDelete: 'cascade' }),
   exerciseId: text('exercise_id')
     .notNull()
-    .references(() => exercises.id),
+    .references(() => exercises.id, { onDelete: 'cascade' }),
   orderIndex: integer('order_index').notNull(),
   setsTarget: integer('sets_target').notNull(),
   repsMin: integer('reps_min').notNull(),
@@ -131,7 +131,10 @@ export const planDays = sqliteTable('plan_days', {
     .notNull()
     .references(() => plans.id, { onDelete: 'cascade' }),
   dayOfWeek: integer('day_of_week').notNull(),
-  workoutId: text('workout_id').references(() => workouts.id),
+  // Apagar treino → dia vira "descanso" (set null)
+  workoutId: text('workout_id').references(() => workouts.id, {
+    onDelete: 'set null',
+  }),
 })
 
 export const sessions = sqliteTable('sessions', {
@@ -139,10 +142,11 @@ export const sessions = sqliteTable('sessions', {
   userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
+  // Apagar treino → apaga sessões dele (cascade); apagar plano → desvincula (set null)
   workoutId: text('workout_id')
     .notNull()
-    .references(() => workouts.id),
-  planId: text('plan_id').references(() => plans.id),
+    .references(() => workouts.id, { onDelete: 'cascade' }),
+  planId: text('plan_id').references(() => plans.id, { onDelete: 'set null' }),
   startedAt: integer('started_at').notNull(),
   finishedAt: integer('finished_at'),
   durationSeconds: integer('duration_seconds'),
@@ -157,7 +161,7 @@ export const sessionSets = sqliteTable('session_sets', {
     .references(() => sessions.id, { onDelete: 'cascade' }),
   exerciseId: text('exercise_id')
     .notNull()
-    .references(() => exercises.id),
+    .references(() => exercises.id, { onDelete: 'cascade' }),
   setNumber: integer('set_number').notNull(),
   weightKg: real('weight_kg').notNull(),
   reps: integer('reps').notNull(),
@@ -196,7 +200,7 @@ export const personalRecords = sqliteTable('personal_records', {
     .references(() => users.id, { onDelete: 'cascade' }),
   exerciseId: text('exercise_id')
     .notNull()
-    .references(() => exercises.id),
+    .references(() => exercises.id, { onDelete: 'cascade' }),
   weightKg: real('weight_kg').notNull(),
   reps: integer('reps').notNull(),
   estimated1rm: real('estimated_1rm').notNull(),

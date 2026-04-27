@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { ScrollRow } from '@/components/ui/ScrollRow'
 import { useSessions } from '@/features/sessions/queries'
 import {
   useExercises,
@@ -203,25 +204,23 @@ export function ProgressRoute() {
         </div>
 
         {/* Filtro temporal */}
-        <div className="-mx-4 overflow-x-auto px-4 [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max gap-1.5">
-            {RANGE_PRESETS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => setPreset(p.value)}
-                className={cn(
-                  'shrink-0 rounded-full border px-3 py-1 text-xs transition-colors',
-                  preset === p.value
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border hover:bg-accent',
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <ScrollRow bleed>
+          {RANGE_PRESETS.map((p) => (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => setPreset(p.value)}
+              className={cn(
+                'shrink-0 rounded-full border px-3 py-1 text-xs transition-colors',
+                preset === p.value
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border hover:bg-accent',
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+        </ScrollRow>
 
         {preset === 'custom' ? (
           <div className="flex items-center gap-2 rounded-md border border-border bg-card p-2">

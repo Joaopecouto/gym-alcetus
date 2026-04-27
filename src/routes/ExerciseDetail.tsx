@@ -124,7 +124,7 @@ export function ExerciseDetailRoute() {
         open={confirmDel}
         onClose={() => setConfirmDel(false)}
         title={`Apagar "${exercise.name}"?`}
-        description="Treinos que usam esse exercício não são afetados, mas vão exibir só o id."
+        description="O exercício é removido dos seus treinos onde ele aparece e do histórico de séries. Não dá pra desfazer."
         actions={
           <>
             <Button variant="ghost" onClick={() => setConfirmDel(false)}>

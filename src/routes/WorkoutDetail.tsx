@@ -148,14 +148,14 @@ export function WorkoutDetailRoute() {
         open={confirmDel}
         onClose={() => setConfirmDel(false)}
         title={`Apagar "${w.name}"?`}
-        description="Sessões já feitas com esse treino continuam no histórico, mas o template some."
+        description="Apaga o template e TODAS as sessões deste treino no seu histórico. Os exercícios continuam disponíveis na biblioteca. Não dá pra desfazer."
         actions={
           <>
             <Button variant="ghost" onClick={() => setConfirmDel(false)}>
               Cancelar
             </Button>
             <Button variant="destructive" onClick={doDelete}>
-              Apagar
+              Apagar tudo
             </Button>
           </>
         }

@@ -15,6 +15,7 @@ import {
 import { ptBR } from 'date-fns/locale'
 import { CalendarDays, Clock, Dumbbell, Flame, Target, Weight } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { ScrollRow } from '@/components/ui/ScrollRow'
 import { useSessions } from '@/features/sessions/queries'
 import { useWorkouts } from '@/features/workouts/queries'
 import { useExercises, useMuscleGroups } from '@/features/exercises/queries'
@@ -98,25 +99,23 @@ export function HistoryRoute() {
       />
 
       <div className="px-4 pt-2">
-        <div className="-mx-4 overflow-x-auto px-4 [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max gap-1.5">
-            {RANGES.map((r) => (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => setRange(r.key)}
-                className={cn(
-                  'shrink-0 rounded-full border px-3 py-1 text-xs transition-colors',
-                  range === r.key
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border hover:bg-accent',
-                )}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <ScrollRow bleed>
+          {RANGES.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => setRange(r.key)}
+              className={cn(
+                'shrink-0 rounded-full border px-3 py-1 text-xs transition-colors',
+                range === r.key
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border hover:bg-accent',
+              )}
+            >
+              {r.label}
+            </button>
+          ))}
+        </ScrollRow>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 px-4 sm:grid-cols-4">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Plus, Search, X } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Input } from '@/components/ui/Input'
+import { ScrollRow } from '@/components/ui/ScrollRow'
 import { ExerciseCard } from '@/features/exercises/ExerciseCard'
 import {
   useExercises,
@@ -153,11 +154,7 @@ export function LibraryRoute() {
 }
 
 function FilterRow({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="flex w-max gap-1.5">{children}</div>
-    </div>
-  )
+  return <ScrollRow bleed>{children}</ScrollRow>
 }
 
 function Chip({

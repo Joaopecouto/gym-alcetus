@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
+import { ScrollRow } from '@/components/ui/ScrollRow'
 import {
   useCreateWorkout,
   useUpdateWorkout,
@@ -497,27 +498,20 @@ function ExercisePicker({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <div className="-mx-3 overflow-x-auto px-3 [&::-webkit-scrollbar]:hidden">
-            <div className="flex w-max gap-1.5">
+          <ScrollRow className="-mx-3 px-3">
+            <Mini active={muscle === null} onClick={() => setMuscle(null)}>
+              Todos
+            </Mini>
+            {muscleGroups.map((m) => (
               <Mini
-                active={muscle === null}
-                onClick={() => setMuscle(null)}
+                key={m.id}
+                active={muscle === m.id}
+                onClick={() => setMuscle(muscle === m.id ? null : m.id)}
               >
-                Todos
+                {m.namePt}
               </Mini>
-              {muscleGroups.map((m) => (
-                <Mini
-                  key={m.id}
-                  active={muscle === m.id}
-                  onClick={() =>
-                    setMuscle(muscle === m.id ? null : m.id)
-                  }
-                >
-                  {m.namePt}
-                </Mini>
-              ))}
-            </div>
-          </div>
+            ))}
+          </ScrollRow>
         </div>
 
         <ul className="flex-1 space-y-1 overflow-y-auto p-3 pt-0">
