@@ -5,7 +5,6 @@ import {
   Dumbbell,
   Flame,
   Play,
-  Settings as SettingsIcon,
 } from 'lucide-react'
 import { format, isToday, isYesterday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -17,6 +16,8 @@ import { useUser } from '@/stores/user'
 import { api } from '@/lib/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query'
+import { cn } from '@/lib/utils'
+import { DAY_LABELS_SHORT } from '@/types'
 
 export function HomeRoute() {
   const user = useUser((s) => s.user)
@@ -70,6 +71,13 @@ export function HomeRoute() {
 
   const greeting = useMemo(() => greetingFor(user?.name ?? 'você'), [user])
 
+  // Mapa rápido de workouts pra montar o cronograma da semana
+  const workoutById = useMemo(
+    () => new Map(workoutsQ.data?.map((w) => [w.id, w])),
+    [workoutsQ.data],
+  )
+  const todayDow = new Date().getDay()
+
   return (
     <div className="pb-4">
       <PageHeader
@@ -82,10 +90,21 @@ export function HomeRoute() {
         action={
           <Link
             to="/settings"
-            className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
-            aria-label="Configurações"
+            className="inline-flex size-9 items-center justify-center overflow-hidden rounded-full bg-secondary text-muted-foreground hover:opacity-90"
+            aria-label="Perfil e configurações"
           >
-            <SettingsIcon className="size-5" />
+            {user?.picture ? (
+              <img
+                src={user.picture}
+                alt={user.name ?? 'Perfil'}
+                className="size-9 rounded-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="text-sm font-semibold uppercase">
+                {(user?.name ?? '?').trim().charAt(0)}
+              </span>
+            )}
           </Link>
         }
       />
@@ -138,6 +157,67 @@ export function HomeRoute() {
             </div>
           </Link>
         )}
+
+        {/* Cronograma da semana — atalho rápido pros treinos planejados.
+            Só renderiza se houver plano ativo (senão mostra o CTA de criar
+            plano mais embaixo). Hoje fica destacado com border primary. */}
+        {activePlanQ.data ? (
+          <div className="rounded-xl border border-border bg-card p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Esta semana · {activePlanQ.data.name}
+              </p>
+              <Link
+                to={`/plans/${activePlanQ.data.id}`}
+                className="text-xs text-primary hover:underline"
+              >
+                Editar
+              </Link>
+            </div>
+            <div className="mt-2 grid grid-cols-7 gap-1">
+              {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
+                const d = activePlanQ.data!.days.find(
+                  (x) => x.dayOfWeek === dow,
+                )
+                const w = d?.workoutId ? workoutById.get(d.workoutId) : null
+                const isCurrent = dow === todayDow
+                return (
+                  <Link
+                    key={dow}
+                    to={
+                      w
+                        ? `/workouts/${w.id}`
+                        : `/plans/${activePlanQ.data!.id}`
+                    }
+                    className={cn(
+                      'flex flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition',
+                      isCurrent
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:bg-accent',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'text-[10px] font-semibold uppercase tracking-wider',
+                        isCurrent ? 'text-primary' : 'text-muted-foreground',
+                      )}
+                    >
+                      {DAY_LABELS_SHORT[dow]}
+                    </span>
+                    <span
+                      className={cn(
+                        'block w-full truncate text-[11px] font-medium leading-tight',
+                        !w && 'text-muted-foreground',
+                      )}
+                    >
+                      {w ? w.name : '—'}
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-border bg-card p-4">
