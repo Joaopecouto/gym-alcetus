@@ -17,7 +17,7 @@ Tudo aqui é **copia-e-cola no terminal browser do painel da Hostinger**. Sem GU
 Cole no terminal browser, dá enter:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SEU-USUARIO/iron-track/main/deploy/hostinger-setup.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/SEU-USUARIO/gym-alcetus/main/deploy/hostinger-setup.sh | sudo bash
 ```
 
 Ou, se ainda não tem o repo público, copia o conteúdo de `hostinger-setup.sh` e cola direto.
@@ -27,7 +27,7 @@ Esse passo instala Docker, abre porta 80/443 no firewall.
 ### 2. Deploy do app
 
 ```bash
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/SEU-USUARIO/iron-track/main/deploy/hostinger-app.sh)
+sudo bash <(curl -fsSL https://raw.githubusercontent.com/SEU-USUARIO/gym-alcetus/main/deploy/hostinger-app.sh)
 ```
 
 Ele vai pedir:
@@ -41,7 +41,7 @@ App fica rodando em `127.0.0.1:3000` (interno, sem TLS).
 ### 3. nginx + HTTPS
 
 ```bash
-sudo bash /opt/iron-track/deploy/hostinger-tls.sh iron.seu-dominio.com seu@email.com
+sudo bash /opt/gym-alcetus/deploy/hostinger-tls.sh iron.seu-dominio.com seu@email.com
 ```
 
 certbot pega cert Let's Encrypt e configura nginx como reverse proxy.
@@ -51,7 +51,7 @@ App fica disponível em `https://iron.seu-dominio.com`.
 ## Atualizar (depois de mudanças no código)
 
 ```bash
-cd /opt/iron-track
+cd /opt/gym-alcetus
 git pull
 docker compose build
 docker compose up -d
@@ -60,18 +60,18 @@ docker compose up -d
 Ou simplesmente:
 
 ```bash
-sudo bash /opt/iron-track/deploy/hostinger-app.sh
+sudo bash /opt/gym-alcetus/deploy/hostinger-app.sh
 ```
 
 (idempotente — re-roda os passos)
 
 ## Backup do banco
 
-O SQLite mora num volume Docker (`iron-track-data`). Pra fazer backup:
+O SQLite mora num volume Docker (`gym-alcetus-data`). Pra fazer backup:
 
 ```bash
-docker run --rm -v iron-track-data:/data -v $(pwd):/backup alpine \
-  sh -c "cp /data/iron-track.db /backup/iron-track-$(date +%Y%m%d-%H%M%S).db"
+docker run --rm -v gym-alcetus-data:/data -v $(pwd):/backup alpine \
+  sh -c "cp /data/gym-alcetus.db /backup/gym-alcetus-$(date +%Y%m%d-%H%M%S).db"
 ```
 
 ## Logs / debug
@@ -80,7 +80,7 @@ docker run --rm -v iron-track-data:/data -v $(pwd):/backup alpine \
 docker compose logs -f         # live
 docker compose ps              # status
 docker compose restart         # reiniciar
-docker exec -it iron-track sh  # entrar no container
+docker exec -it gym-alcetus sh  # entrar no container
 ```
 
 ## Imagens dos exercícios
@@ -92,12 +92,12 @@ As 44 fotos vêm pré-baixadas do [free-exercise-db](https://github.com/yuhonas/
 Se você criar exercícios customizados ou quiser substituir alguma foto:
 
 ```bash
-# 1. Coloca o arquivo em /opt/iron-track/server/data/exercise-images/
+# 1. Coloca o arquivo em /opt/gym-alcetus/server/data/exercise-images/
 #    seguindo a convenção: <exercise-id>.jpg (ou .png/.gif/.webp)
-sudo cp minha-foto.jpg /opt/iron-track/server/data/exercise-images/ex-meu-id.jpg
+sudo cp minha-foto.jpg /opt/gym-alcetus/server/data/exercise-images/ex-meu-id.jpg
 
 # 2. Reinicia o container (auto-detect roda no boot)
-cd /opt/iron-track && docker compose restart
+cd /opt/gym-alcetus && docker compose restart
 ```
 
 ### Re-baixar tudo (caso queira atualizar das fontes)
@@ -119,7 +119,7 @@ Em VPS de 1GB RAM (plano básico Hostinger), idle:
 
 | Componente | RAM idle | Disco |
 |---|---|---|
-| Container Iron Track | ~50–80 MB | ~150 MB (imagem) + DB (uns KBs) |
+| Container Gym Alcetus | ~50–80 MB | ~150 MB (imagem) + DB (uns KBs) |
 | nginx | ~10 MB | — |
 | Sistema base Ubuntu | ~250 MB | — |
 | **Total** | **~350 MB** | **<200 MB** |

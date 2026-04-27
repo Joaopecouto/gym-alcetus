@@ -30,7 +30,7 @@ export async function devRoutes(app: FastifyInstance) {
       await db.insert(schema.users).values({
         id: userId,
         googleId: FAKE_GOOGLE_ID,
-        email: 'demo@iron-track.dev',
+        email: 'demo@gym-alcetus.dev',
         name: 'João (preview)',
         picture: null,
       })

@@ -1,4 +1,4 @@
-# Iron Track
+# Gym Alcetus
 
 Acompanhamento de treinos em web app — login com Google, dados num SQLite na sua VPS, ~50MB de RAM idle no servidor. Acessa do iPhone via Safari ("Adicionar à Tela de Início" deixa com cara de app, em PWA).
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  Iron Track — deploy do app na VPS Hostinger
+#  Gym Alcetus — deploy do app na VPS Hostinger
 # =============================================================================
 #  Pré-requisito: rodou hostinger-setup.sh antes (Docker já instalado).
 #
 #  O que esse script faz:
-#   1. Pede o repo Git (ou usa o que já tá clonado em /opt/iron-track)
+#   1. Pede o repo Git (ou usa o que já tá clonado em /opt/gym-alcetus)
 #   2. Clona/atualiza o código
 #   3. Pede env vars (GOOGLE_CLIENT_ID, JWT_SECRET, domínio) se ainda não setadas
 #   4. Faz `docker compose build` + `up -d`
@@ -16,17 +16,17 @@
 
 set -euo pipefail
 
-APP_DIR="/opt/iron-track"
+APP_DIR="/opt/gym-alcetus"
 ENV_FILE="$APP_DIR/server/.env"
 ROOT_ENV_FILE="$APP_DIR/.env"
 
-echo "==> Iron Track deploy"
+echo "==> Gym Alcetus deploy"
 
 # -----------------------------------------------------------------------------
 # 1. Repositório
 # -----------------------------------------------------------------------------
 if [ ! -d "$APP_DIR/.git" ]; then
-  read -rp "URL do repositório Git (ex: https://github.com/voce/iron-track.git): " REPO_URL
+  read -rp "URL do repositório Git (ex: https://github.com/voce/gym-alcetus.git): " REPO_URL
   if [ -z "$REPO_URL" ]; then
     echo "URL vazia, abortando"; exit 1
   fi
@@ -95,4 +95,4 @@ curl -fsS http://127.0.0.1:3000/api/health || echo "  (health falhou — confira
 echo
 echo "Deploy OK. App rodando em http://127.0.0.1:3000 (interno)."
 echo "Próximo: configurar nginx ou Cloudflare Tunnel pra expor com HTTPS."
-echo "Veja deploy/nginx-iron-track.conf e deploy/hostinger-tls.sh."
+echo "Veja deploy/nginx-gym-alcetus.conf e deploy/hostinger-tls.sh."

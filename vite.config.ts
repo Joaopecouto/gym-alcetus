@@ -13,10 +13,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon-maskable.svg'],
+      includeAssets: ['alcetus-logo.png'],
       manifest: {
-        name: 'Iron Track',
-        short_name: 'Iron Track',
+        name: 'Gym Alcetus',
+        short_name: 'Gym Alcetus',
         description:
           'Acompanhamento de treinos: biblioteca, planejamento semanal, histórico e evolução.',
         theme_color: '#0f172a',
@@ -28,15 +28,15 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: 'favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: 'alcetus-logo.png',
+            sizes: '305x335',
+            type: 'image/png',
             purpose: 'any',
           },
           {
-            src: 'icon-maskable.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: 'alcetus-logo.png',
+            sizes: '305x335',
+            type: 'image/png',
             purpose: 'maskable',
           },
         ],

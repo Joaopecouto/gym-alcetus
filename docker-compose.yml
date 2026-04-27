@@ -6,15 +6,15 @@ services:
         # Lê do server/.env (que docker-compose injeta) — o Client ID é embutido
         # no bundle do frontend em build time pelo vite-plugin-pwa.
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-    image: iron-track:latest
-    container_name: iron-track
+    image: gym-alcetus:latest
+    container_name: gym-alcetus
     restart: unless-stopped
     env_file:
       - server/.env
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
-      - iron-track-data:/data
+      - gym-alcetus-data:/data
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
@@ -23,4 +23,4 @@ services:
       start_period: 10s
 
 volumes:
-  iron-track-data:
+  gym-alcetus-data:

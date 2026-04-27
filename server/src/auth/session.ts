@@ -1,8 +1,8 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { config } from '../config.js'
 
-const ISSUER = 'iron-track'
-const AUDIENCE = 'iron-track-app'
+const ISSUER = 'gym-alcetus'
+const AUDIENCE = 'gym-alcetus-app'
 const SESSION_TTL_DAYS = 30
 
 function getSecretKey() {
@@ -36,5 +36,5 @@ export async function verifySession(token: string): Promise<SessionPayload> {
   return { userId: payload.userId }
 }
 
-export const SESSION_COOKIE = 'iron-track-session'
+export const SESSION_COOKIE = 'gym-alcetus-session'
 export const SESSION_TTL_SECONDS = SESSION_TTL_DAYS * 24 * 60 * 60

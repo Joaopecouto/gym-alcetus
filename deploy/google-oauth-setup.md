@@ -1,6 +1,6 @@
 # Como pegar o `GOOGLE_CLIENT_ID` (passo-a-passo)
 
-O Iron Track usa **Google Identity Services** (Sign-in with Google). Você só precisa de **uma coisa**: o `GOOGLE_CLIENT_ID`. Sem `client_secret`, sem redirect URIs (porque a verificação acontece direto via ID token).
+O Gym Alcetus usa **Google Identity Services** (Sign-in with Google). Você só precisa de **uma coisa**: o `GOOGLE_CLIENT_ID`. Sem `client_secret`, sem redirect URIs (porque a verificação acontece direto via ID token).
 
 Tempo total: ~5 minutos.
 
@@ -8,7 +8,7 @@ Tempo total: ~5 minutos.
 
 ## Se você já tem um Google OAuth app
 
-Pula direto pro **passo 4** (adicionar a origem autorizada do Iron Track) e copia o Client ID que já existe.
+Pula direto pro **passo 4** (adicionar a origem autorizada do Gym Alcetus) e copia o Client ID que já existe.
 
 ---
 
@@ -16,12 +16,12 @@ Pula direto pro **passo 4** (adicionar a origem autorizada do Iron Track) e copi
 
 Abre: https://console.cloud.google.com/
 
-Logue com a conta Google que você quer usar pra administrar o app (não precisa ser a mesma do login no Iron Track).
+Logue com a conta Google que você quer usar pra administrar o app (não precisa ser a mesma do login no Gym Alcetus).
 
 ## 2. Criar (ou escolher) um projeto
 
 - Topo da página, clica no seletor de projetos
-- "Novo projeto" → nome livre, ex: "Iron Track"
+- "Novo projeto" → nome livre, ex: "Gym Alcetus"
 - Esperar uns 10s pra criar
 - Selecionar o projeto novo
 
@@ -32,7 +32,7 @@ Antes de criar credenciais, o Google exige que você defina como o popup de logi
 - Menu esquerdo → **APIs e Serviços** → **Tela de consentimento OAuth**
 - Tipo: **Externo** (pra qualquer conta Google poder logar) → **Criar**
 - Preenche:
-  - **Nome do app**: Iron Track
+  - **Nome do app**: Gym Alcetus
   - **E-mail de suporte**: seu e-mail
   - **Logotipo**: opcional
   - **Domínio do app**: seu domínio (ex: `iron.alcetus.com`) — quando tiver
@@ -48,7 +48,7 @@ Antes de criar credenciais, o Google exige que você defina como o popup de logi
 - Menu esquerdo → **APIs e Serviços** → **Credenciais**
 - Botão **+ Criar credenciais** (topo) → **ID do cliente OAuth**
 - Tipo de aplicativo: **Aplicativo da Web**
-- Nome: livre (ex: "Iron Track Web")
+- Nome: livre (ex: "Gym Alcetus Web")
 - **Origens JavaScript autorizadas** — adicione todas as URLs onde o app vai rodar:
   - `https://iron.SEU-DOMINIO.com` (produção, depois do TLS estar instalado)
   - `http://localhost:5173` (dev local com Vite)
@@ -58,14 +58,14 @@ Antes de criar credenciais, o Google exige que você defina como o popup de logi
 
 Vai aparecer um popup com **ID do cliente** e **Chave secreta do cliente**:
 - Copia o **ID do cliente** (formato: `123456789-abcdefghijk.apps.googleusercontent.com`)
-- A chave secreta **não é necessária** pro Iron Track
+- A chave secreta **não é necessária** pro Gym Alcetus
 
 ## 5. Salvar no `.env` da VPS
 
 SSH na VPS (ou terminal browser do painel Hostinger) e edita o `.env`:
 
 ```bash
-nano /opt/iron-track/server/.env
+nano /opt/gym-alcetus/server/.env
 ```
 
 Substitui o valor placeholder pelo Client ID real:
@@ -77,13 +77,13 @@ GOOGLE_CLIENT_ID=123456789-abcdefghijk.apps.googleusercontent.com
 Salva (`Ctrl+O`, `Enter`, `Ctrl+X`) e recria o container:
 
 ```bash
-cd /opt/iron-track
+cd /opt/gym-alcetus
 docker compose up -d --force-recreate
 ```
 
 ## 6. Configurar o frontend pra conhecer o Client ID
 
-O frontend precisa do Client ID em **build time** via `VITE_GOOGLE_CLIENT_ID`. No Iron Track o build do frontend já roda dentro do Dockerfile, então adiciona como build arg no `docker-compose.yml`:
+O frontend precisa do Client ID em **build time** via `VITE_GOOGLE_CLIENT_ID`. No Gym Alcetus o build do frontend já roda dentro do Dockerfile, então adiciona como build arg no `docker-compose.yml`:
 
 Edita `docker-compose.yml`:
 

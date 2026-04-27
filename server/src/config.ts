@@ -36,7 +36,7 @@ export const config = {
 
   dbPath: optional(
     'DB_PATH',
-    path.resolve(__dirname, '../data/iron-track.db'),
+    path.resolve(__dirname, '../data/gym-alcetus.db'),
   ),
   staticDir: optional(
     'STATIC_DIR',

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  Iron Track — instala nginx + certbot e tira certificado TLS Let's Encrypt
+#  Gym Alcetus — instala nginx + certbot e tira certificado TLS Let's Encrypt
 # =============================================================================
 #  Pré-requisito:
 #    1. DNS apontando pro IP da VPS (registro A no Cloudflare/Hostinger)
@@ -20,9 +20,9 @@ if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
   exit 1
 fi
 
-REPO_DIR="/opt/iron-track"
-CONF_SRC="$REPO_DIR/deploy/nginx-iron-track.conf"
-CONF_DST="/etc/nginx/sites-available/iron-track"
+REPO_DIR="/opt/gym-alcetus"
+CONF_SRC="$REPO_DIR/deploy/nginx-gym-alcetus.conf"
+CONF_DST="/etc/nginx/sites-available/gym-alcetus"
 
 echo "==> Instalando nginx + certbot"
 apt-get update -y
@@ -31,7 +31,7 @@ mkdir -p /var/www/letsencrypt
 
 echo "==> Aplicando config nginx pra $DOMAIN"
 sed "s|SEU_DOMINIO|$DOMAIN|g" "$CONF_SRC" > "$CONF_DST"
-ln -sf "$CONF_DST" /etc/nginx/sites-enabled/iron-track
+ln -sf "$CONF_DST" /etc/nginx/sites-enabled/gym-alcetus
 rm -f /etc/nginx/sites-enabled/default
 
 # Primeira reload só com o bloco HTTP (sem TLS ainda — ssl_certificate aponta

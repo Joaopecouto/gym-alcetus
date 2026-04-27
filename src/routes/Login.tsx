@@ -1,4 +1,3 @@
-import { Dumbbell } from 'lucide-react'
 import { useState } from 'react'
 import { GoogleSignInButton } from '@/features/auth/GoogleSignInButton'
 import { Button } from '@/components/ui/Button'
@@ -30,11 +29,15 @@ export function LoginRoute() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-8 p-6 text-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="flex size-20 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-          <Dumbbell className="size-10" aria-hidden="true" />
-        </div>
+        <img
+          src="/alcetus-logo.png"
+          alt="Gym Alcetus"
+          width={96}
+          height={105}
+          className="h-24 w-auto"
+        />
         <div className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Iron Track</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Gym Alcetus</h1>
           <p className="text-muted-foreground">
             Acompanhamento de treinos, evolução e histórico.
           </p>

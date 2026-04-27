@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  Iron Track — setup inicial da VPS Hostinger
+#  Gym Alcetus — setup inicial da VPS Hostinger
 # =============================================================================
 #  Roda 1x na vida da VPS. Instala Docker, libera porta, cria usuário deploy.
 #  Cole inteiro no terminal browser do painel da Hostinger e dá enter.
