@@ -18,6 +18,7 @@ set -euo pipefail
 
 APP_DIR="/opt/iron-track"
 ENV_FILE="$APP_DIR/server/.env"
+ROOT_ENV_FILE="$APP_DIR/.env"
 
 echo "==> Iron Track deploy"
 
@@ -58,8 +59,17 @@ HOST=0.0.0.0
 EOF
   echo "==> .env gravado em $ENV_FILE"
 else
-  echo "==> .env já existe, mantendo"
+  echo "==> server/.env já existe, mantendo"
+  # Carrega GOOGLE_CLIENT_ID do server/.env pra reusar
+  GOOGLE_CLIENT_ID=$(grep -E '^GOOGLE_CLIENT_ID=' "$ENV_FILE" | cut -d'=' -f2-)
 fi
+
+# .env na raiz é necessário pro docker-compose interpolar VITE_GOOGLE_CLIENT_ID
+# como build arg (Dockerfile recebe via ARG e Vite injeta no bundle do front).
+echo "==> Atualizando .env da raiz (build args do compose)"
+cat > "$ROOT_ENV_FILE" <<EOF
+GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+EOF
 
 # -----------------------------------------------------------------------------
 # 3. Build + up
