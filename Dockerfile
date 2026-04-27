@@ -30,9 +30,10 @@ ENV STATIC_DIR=/app/dist
 COPY server/package.json server/package-lock.json /app/server/
 RUN cd /app/server && npm ci --omit=dev && npm cache clean --force
 
-# Servidor compilado + migrations SQL
+# Servidor compilado + migrations SQL + imagens dos exercícios (commitadas no repo)
 COPY --from=server-builder /app/server/dist /app/server/dist
 COPY --from=server-builder /app/server/drizzle /app/server/drizzle
+COPY --from=server-builder /app/server/data/exercise-images /app/server/data/exercise-images
 
 # Frontend (SPA estática)
 COPY --from=frontend-builder /app/dist /app/dist

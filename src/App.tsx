@@ -15,6 +15,7 @@ import { SessionDetailRoute } from '@/routes/SessionDetail'
 import { SessionExecuteRoute } from '@/routes/SessionExecute'
 import { ProgressRoute } from '@/routes/Progress'
 import { SettingsRoute } from '@/routes/Settings'
+import { ProfileEditRoute } from '@/routes/ProfileEdit'
 import { NotFoundRoute } from '@/routes/NotFound'
 import { OnboardingRoute } from '@/routes/onboarding/Onboarding'
 import { LoginRoute } from '@/routes/Login'
@@ -57,6 +58,7 @@ function AuthedRoutes() {
       <Route path="/history/:id" element={<SessionDetailRoute />} />
       <Route path="/session/:id" element={<SessionExecuteRoute />} />
       <Route path="/settings" element={<SettingsRoute />} />
+      <Route path="/settings/profile" element={<ProfileEditRoute />} />
 
       {/* Rotas com tab bar */}
       <Route element={<AppShell />}>

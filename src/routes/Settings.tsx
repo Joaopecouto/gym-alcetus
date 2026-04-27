@@ -1,4 +1,4 @@
-import { ArrowLeft, LogOut, Moon, Sun, SunMoon } from 'lucide-react'
+import { ArrowLeft, LogOut, Moon, Pencil, Sun, SunMoon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { useSettings, type Theme } from '@/stores/settings'
@@ -50,6 +50,13 @@ export function SettingsRoute() {
                 {user.email}
               </p>
             </div>
+            <Link
+              to="/settings/profile"
+              className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
+              aria-label="Editar perfil"
+            >
+              <Pencil className="size-4" />
+            </Link>
           </div>
 
           <dl className="mt-4 space-y-1.5 text-sm">
