@@ -351,7 +351,7 @@ function StepGoals({
       <div className="space-y-2">
         <Label>Foco muscular (opcional)</Label>
         <div className="flex flex-wrap gap-1.5">
-          {muscleGroups.map((m) => {
+          {muscleGroups.filter((m) => m.id !== 'cardio').map((m) => {
             const active = form.focusMuscles.includes(m.id)
             return (
               <button

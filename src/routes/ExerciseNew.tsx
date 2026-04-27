@@ -34,7 +34,9 @@ export function ExerciseNewRoute() {
       setError('Diz o nome.')
       return
     }
-    if (!primaryMuscleId) {
+    // Cardio não tem grupo muscular específico — usa 'cardio' como bucket
+    const finalMuscleId = kind === 'cardio' ? 'cardio' : primaryMuscleId
+    if (!finalMuscleId) {
       setError('Escolha o grupo muscular principal.')
       return
     }
@@ -47,7 +49,7 @@ export function ExerciseNewRoute() {
       const ex = await create.mutateAsync({
         name: name.trim(),
         kind,
-        primaryMuscleId,
+        primaryMuscleId: finalMuscleId,
         secondaryMuscles: [],
         equipment,
         difficulty,
@@ -112,25 +114,34 @@ export function ExerciseNewRoute() {
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Grupo muscular principal</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {muscles.data?.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setPrimary(m.id)}
-                className={
-                  primaryMuscleId === m.id
-                    ? 'rounded-full border border-primary bg-primary px-3 py-1 text-xs text-primary-foreground'
-                    : 'rounded-full border border-border px-3 py-1 text-xs hover:bg-accent'
-                }
-              >
-                {m.namePt}
-              </button>
-            ))}
+        {kind === 'strength' ? (
+          <div className="space-y-1.5">
+            <Label>Grupo muscular principal</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {muscles.data
+                ?.filter((m) => m.id !== 'cardio')
+                .map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setPrimary(m.id)}
+                    className={
+                      primaryMuscleId === m.id
+                        ? 'rounded-full border border-primary bg-primary px-3 py-1 text-xs text-primary-foreground'
+                        : 'rounded-full border border-border px-3 py-1 text-xs hover:bg-accent'
+                    }
+                  >
+                    {m.namePt}
+                  </button>
+                ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-border bg-card p-3 text-sm text-muted-foreground">
+            Exercícios de cardio ficam agrupados como "Cardio" na biblioteca —
+            não precisa de grupo muscular específico.
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <Label htmlFor="equipment">Equipamento</Label>
