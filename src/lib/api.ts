@@ -1,5 +1,7 @@
 import type {
+  BodyMeasurement,
   Exercise,
+  MeasurementInput,
   MuscleGroup,
   OnboardingPayload,
   Plan,
@@ -208,6 +210,26 @@ export const api = {
   },
   deletePlan(id: string) {
     return request<{ ok: true }>(`/api/plans/${id}`, { method: 'DELETE' })
+  },
+
+  // ----- measurements -----
+  async listMeasurements(): Promise<BodyMeasurement[]> {
+    const { measurements } = await request<{ measurements: BodyMeasurement[] }>(
+      '/api/measurements',
+    )
+    return measurements
+  },
+  async createMeasurement(payload: MeasurementInput): Promise<BodyMeasurement> {
+    const { measurement } = await request<{ measurement: BodyMeasurement }>(
+      '/api/measurements',
+      { method: 'POST', body: JSON.stringify(payload) },
+    )
+    return measurement
+  },
+  deleteMeasurement(id: string) {
+    return request<{ ok: true }>(`/api/measurements/${id}`, {
+      method: 'DELETE',
+    })
   },
 }
 

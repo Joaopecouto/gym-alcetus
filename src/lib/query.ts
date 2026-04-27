@@ -21,4 +21,5 @@ export const queryKeys = {
   session: (id: string) => ['session', id] as const,
   plans: ['plans'] as const,
   plan: (id: string) => ['plan', id] as const,
+  measurements: ['measurements'] as const,
 }

@@ -10,20 +10,27 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { TrendingUp } from 'lucide-react'
+import { Plus, Scale, TrendingDown, TrendingUp } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ScrollRow } from '@/components/ui/ScrollRow'
+import { Button } from '@/components/ui/Button'
 import { useSessions } from '@/features/sessions/queries'
 import {
   useExercises,
   useMuscleGroups,
 } from '@/features/exercises/queries'
+import {
+  useDeleteMeasurement,
+  useMeasurements,
+} from '@/features/measurements/queries'
+import { WeightDialog } from '@/features/measurements/WeightDialog'
 import { api } from '@/lib/api'
 import { useQuery } from '@tanstack/react-query'
 import { estimate1RM } from '@/lib/calc-1rm'
 import { cn } from '@/lib/utils'
 import {
   MUSCLE_COLORS,
+  type BodyMeasurement,
   type Exercise,
   type SessionWithSets,
 } from '@/types'
@@ -79,12 +86,14 @@ export function ProgressRoute() {
   const sessionsQ = useSessions()
   const exercisesQ = useExercises()
   const musclesQ = useMuscleGroups()
+  const measurementsQ = useMeasurements()
 
   const [mode, setMode] = useState<Mode>('exercise')
   const [metric, setMetric] = useState<Metric>('oneRm')
   const [preset, setPreset] = useState<RangePreset>('month')
   const [customRange, setCustomRange] = useState({ from: '', to: '' })
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [weightDialogOpen, setWeightDialogOpen] = useState(false)
 
   const range = rangeFromPreset(preset, customRange)
 
@@ -337,6 +346,28 @@ export function ProgressRoute() {
         </div>
       </div>
 
+      {/* ===== Peso corporal ===== */}
+      <section className="mt-6 px-4">
+        <div className="flex items-end justify-between">
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            Peso corporal
+          </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setWeightDialogOpen(true)}
+          >
+            <Plus className="size-4" />
+            Atualizar peso
+          </Button>
+        </div>
+
+        <WeightSection
+          measurements={measurementsQ.data ?? []}
+          loading={measurementsQ.isLoading}
+        />
+      </section>
+
       <section className="mt-6 px-4">
         <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Volume por grupo muscular (período)
@@ -378,6 +409,14 @@ export function ProgressRoute() {
           </ul>
         )}
       </section>
+
+      <WeightDialog
+        open={weightDialogOpen}
+        onClose={() => setWeightDialogOpen(false)}
+        currentWeight={
+          measurementsQ.data?.find((m) => m.weightKg !== null)?.weightKg ?? null
+        }
+      />
     </div>
   )
 }
@@ -474,4 +513,184 @@ function buildMuscleVolume(
       pct: total > 0 ? volume / total : 0,
     }))
     .sort((a, b) => b.volume - a.volume)
+}
+
+function WeightSection({
+  measurements,
+  loading,
+}: {
+  measurements: BodyMeasurement[]
+  loading: boolean
+}) {
+  const deleteM = useDeleteMeasurement()
+
+  // Só pesos não-nulos, ordenados crescente pra plotar
+  const weights = useMemo(
+    () =>
+      measurements
+        .filter((m) => m.weightKg !== null)
+        .map((m) => ({
+          id: m.id,
+          date: m.date,
+          weightKg: m.weightKg as number,
+        }))
+        .sort((a, b) => a.date - b.date),
+    [measurements],
+  )
+
+  if (loading) {
+    return (
+      <div className="mt-2 flex h-32 items-center justify-center rounded-xl border border-border bg-card">
+        <div className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (weights.length === 0) {
+    return (
+      <div className="mt-2 flex flex-col items-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">
+        <Scale className="size-8 text-muted-foreground" aria-hidden="true" />
+        <p className="text-sm text-muted-foreground">
+          Nenhum registro de peso ainda. Toque "Atualizar peso" pra começar.
+        </p>
+      </div>
+    )
+  }
+
+  const latest = weights[weights.length - 1]
+  const first = weights[0]
+  const delta = latest.weightKg - first.weightKg
+  const data = weights.map((w) => ({
+    date: w.date,
+    dateLabel: format(new Date(w.date), 'd/MM', { locale: ptBR }),
+    value: w.weightKg,
+  }))
+
+  return (
+    <div className="mt-2 space-y-3">
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Peso atual
+            </p>
+            <p className="mt-0.5 text-3xl font-semibold tabular-nums">
+              {latest.weightKg} <span className="text-base">kg</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {format(new Date(latest.date), "d 'de' MMM, HH:mm", {
+                locale: ptBR,
+              })}
+            </p>
+          </div>
+          {weights.length > 1 ? (
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Variação total
+              </p>
+              <p
+                className={cn(
+                  'mt-0.5 inline-flex items-center gap-1 text-lg font-semibold tabular-nums',
+                  delta > 0
+                    ? 'text-orange-500'
+                    : delta < 0
+                      ? 'text-emerald-500'
+                      : 'text-muted-foreground',
+                )}
+              >
+                {delta > 0 ? (
+                  <TrendingUp className="size-4" />
+                ) : delta < 0 ? (
+                  <TrendingDown className="size-4" />
+                ) : null}
+                {delta > 0 ? '+' : ''}
+                {delta.toFixed(1)} kg
+              </p>
+              <p className="text-xs text-muted-foreground">
+                desde {format(new Date(first.date), 'd/MM', { locale: ptBR })}
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        {weights.length > 1 ? (
+          <div className="mt-3 h-32 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={data}
+                margin={{ top: 5, right: 8, bottom: 0, left: -10 }}
+              >
+                <CartesianGrid
+                  stroke="var(--color-border)"
+                  strokeDasharray="3 3"
+                />
+                <XAxis
+                  dataKey="dateLabel"
+                  stroke="var(--color-muted-foreground)"
+                  fontSize={11}
+                />
+                <YAxis
+                  stroke="var(--color-muted-foreground)"
+                  fontSize={11}
+                  width={40}
+                  domain={['dataMin - 1', 'dataMax + 1']}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--color-card)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  formatter={(v) => [`${v} kg`, 'Peso']}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#06b6d4"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : null}
+      </div>
+
+      {weights.length > 1 ? (
+        <details className="rounded-xl border border-border bg-card">
+          <summary className="cursor-pointer px-4 py-2 text-sm text-muted-foreground">
+            Histórico ({weights.length} {weights.length === 1 ? 'registro' : 'registros'})
+          </summary>
+          <ul className="border-t border-border">
+            {[...weights].reverse().map((w) => (
+              <li
+                key={w.id}
+                className="flex items-center justify-between border-b border-border px-4 py-2 text-sm last:border-0"
+              >
+                <span className="text-muted-foreground">
+                  {format(new Date(w.date), "d 'de' MMM, HH:mm", {
+                    locale: ptBR,
+                  })}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium tabular-nums">
+                    {w.weightKg} kg
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => deleteM.mutate(w.id)}
+                    className="text-xs text-muted-foreground hover:text-destructive"
+                    aria-label="Apagar registro"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </div>
+  )
 }

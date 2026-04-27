@@ -145,6 +145,38 @@ export interface PlanInput {
   }>
 }
 
+export interface BodyMeasurement {
+  id: string
+  userId: string
+  date: number
+  weightKg: number | null
+  bodyFatPct: number | null
+  chest: number | null
+  waist: number | null
+  armL: number | null
+  armR: number | null
+  thighL: number | null
+  thighR: number | null
+  calfL: number | null
+  calfR: number | null
+  notes: string
+}
+
+export interface MeasurementInput {
+  date?: number
+  weightKg?: number | null
+  bodyFatPct?: number | null
+  chest?: number | null
+  waist?: number | null
+  armL?: number | null
+  armR?: number | null
+  thighL?: number | null
+  thighR?: number | null
+  calfL?: number | null
+  calfR?: number | null
+  notes?: string
+}
+
 export const DAY_LABELS_FULL = [
   'Domingo',
   'Segunda',
