@@ -86,25 +86,39 @@ export function SessionDetailRoute() {
       </div>
 
       <div className="px-4 pt-3">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {workoutQ.data?.name ?? 'Treino'}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {format(date, "EEEE, d 'de' MMMM 'de' y · HH:mm", { locale: ptBR })}
-        </p>
-
-        {/* Mensagem motivacional */}
+        {/* Mensagem motivacional — GRANDE, sem caixa */}
         {(() => {
           const msg = pickWorkoutEndMessage(s.id)
           return (
-            <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
-              <p className="text-base font-semibold">{msg.praise}</p>
-              <p className="mt-0.5 text-sm font-medium text-primary">
+            <div className="mt-2">
+              <h1 className="text-3xl font-bold leading-tight tracking-tight">
+                {msg.praise}
+              </h1>
+              <p className="mt-2 text-xl font-medium leading-snug text-primary">
                 {msg.closer}
               </p>
             </div>
           )
         })()}
+
+        {/* Botão grande pra voltar pro menu */}
+        <Button
+          size="lg"
+          className="mt-6 w-full"
+          onClick={() => navigate('/')}
+        >
+          Voltar pro menu principal
+        </Button>
+
+        {/* Cabeçalho do treino — menor, abaixo do botão */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold tracking-tight">
+            {workoutQ.data?.name ?? 'Treino'}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {format(date, "EEEE, d 'de' MMMM 'de' y · HH:mm", { locale: ptBR })}
+          </p>
+        </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <div className="rounded-lg border border-border bg-card p-3">
