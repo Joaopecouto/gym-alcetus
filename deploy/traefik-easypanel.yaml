@@ -1,0 +1,26 @@
+# Config Traefik (file provider) pra integrar Gym Alcetus com EasyPanel.
+# Copia pra /etc/easypanel/traefik/config/gym-alcetus.yaml
+# O Traefik tem hot-reload — assim que o arquivo aparece na pasta, registra
+# o roteador e tira o cert TLS do Let's Encrypt automaticamente.
+
+http:
+  routers:
+    http-gym-alcetus:
+      rule: "Host(`gym.alcetus.com`)"
+      service: gym-alcetus
+      entryPoints: [http]
+      middlewares: [redirect-to-https]
+    https-gym-alcetus:
+      rule: "Host(`gym.alcetus.com`)"
+      service: gym-alcetus
+      entryPoints: [https]
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: gym.alcetus.com
+  services:
+    gym-alcetus:
+      loadBalancer:
+        servers:
+          - url: "http://gym-alcetus:3000"
+        passHostHeader: true
