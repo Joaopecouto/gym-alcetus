@@ -5,6 +5,23 @@ export type WorkoutMode = 'hypertrophy' | 'strength'
 
 export interface User {
   id: string
+  email: string
+  name: string
+  picture: string | null
+  age: number | null
+  sex: Sex | null
+  weightKg: number | null
+  heightCm: number | null
+  goal: Goal | null
+  level: Level | null
+  weeklyFrequency: number | null
+  focusMuscles: string[] | null
+  onboardingCompleted: boolean
+  createdAt: number
+  updatedAt: number
+}
+
+export interface OnboardingPayload {
   name: string
   age: number
   sex: Sex
@@ -14,8 +31,6 @@ export interface User {
   level: Level
   weeklyFrequency: number
   focusMuscles: string[]
-  createdAt: number
-  updatedAt: number
 }
 
 export interface MuscleGroup {
@@ -26,6 +41,7 @@ export interface MuscleGroup {
 
 export interface Exercise {
   id: string
+  ownerId: string | null
   name: string
   primaryMuscleId: string
   secondaryMuscles: string[]
@@ -40,11 +56,13 @@ export interface Exercise {
 
 export interface Workout {
   id: string
+  userId: string
   name: string
   mode: WorkoutMode
   color: string | null
   notes: string
   createdAt: number
+  updatedAt: number
 }
 
 export interface WorkoutExercise {
@@ -60,22 +78,13 @@ export interface WorkoutExercise {
   notes: string
 }
 
-export interface Plan {
-  id: string
-  name: string
-  isActive: boolean
-  createdAt: number
-}
-
-export interface PlanDay {
-  id: string
-  planId: string
-  dayOfWeek: number // 0 = Sunday, 6 = Saturday
-  workoutId: string | null // null = rest day
+export interface WorkoutWithExercises extends Workout {
+  exercises: WorkoutExercise[]
 }
 
 export interface Session {
   id: string
+  userId: string
   workoutId: string
   planId: string | null
   startedAt: number
@@ -98,28 +107,31 @@ export interface SessionSet {
   completedAt: number | null
 }
 
-export interface BodyMeasurement {
-  id: string
-  date: number
-  weightKg: number | null
-  bodyFatPct: number | null
-  chest: number | null
-  waist: number | null
-  armL: number | null
-  armR: number | null
-  thighL: number | null
-  thighR: number | null
-  calfL: number | null
-  calfR: number | null
-  notes: string
+export interface SessionWithSets extends Session {
+  sets: SessionSet[]
 }
 
-export interface PersonalRecord {
-  id: string
-  exerciseId: string
-  weightKg: number
-  reps: number
-  estimated1rm: number
-  sessionId: string
-  date: number
+export const MUSCLE_COLORS: Record<string, string> = {
+  chest: '#dc2626',
+  back: '#2563eb',
+  quads: '#7c3aed',
+  hamstrings: '#9333ea',
+  glutes: '#c026d3',
+  calves: '#db2777',
+  shoulders: '#ea580c',
+  biceps: '#16a34a',
+  triceps: '#0d9488',
+  abs: '#ca8a04',
+  traps: '#0891b2',
+  forearms: '#65a30d',
+}
+
+export const EQUIPMENT_LABELS: Record<string, string> = {
+  barbell: 'Barra',
+  dumbbell: 'Halteres',
+  machine: 'Máquina',
+  cable: 'Polia/Cabo',
+  bodyweight: 'Peso corporal',
+  kettlebell: 'Kettlebell',
+  bands: 'Elásticos',
 }

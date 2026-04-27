@@ -1,27 +1,49 @@
-import { Dumbbell } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard'
+import { api } from '@/lib/api'
+import { useUser } from '@/stores/user'
+import type { MuscleGroup } from '@/types'
 
 export function OnboardingRoute() {
+  const user = useUser((s) => s.user)
+  const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    api
+      .listMuscleGroups()
+      .then((data) => {
+        if (!cancelled) setMuscleGroups(data)
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center p-6 text-sm text-destructive">
+        Erro ao carregar: {error}
+      </div>
+    )
+  }
+
+  if (!user || !muscleGroups) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-6 p-6 text-center">
-      <div className="flex size-20 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-        <Dumbbell className="size-10" />
-      </div>
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Iron Track</h1>
-        <p className="text-muted-foreground">
-          Seu acompanhamento de treino, offline e na palma da mão.
-        </p>
-      </div>
-      <p className="max-w-sm text-sm text-muted-foreground">
-        O wizard de configuração completo (perfil, objetivos e instalação na tela inicial) virá na próxima fase.
-      </p>
-      <Link
-        to="/"
-        className="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
-      >
-        Explorar o app
-      </Link>
-    </div>
+    <OnboardingWizard
+      initialName={user.name}
+      muscleGroups={muscleGroups}
+    />
   )
 }

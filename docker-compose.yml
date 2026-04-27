@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    image: iron-track:latest
+    container_name: iron-track
+    restart: unless-stopped
+    env_file:
+      - server/.env
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - iron-track-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  iron-track-data:
