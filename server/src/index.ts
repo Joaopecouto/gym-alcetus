@@ -159,11 +159,13 @@ const indexHtmlPath = path.join(staticDir, 'index.html')
 const hasFrontendBuild = fs.existsSync(indexHtmlPath)
 
 if (hasFrontendBuild) {
+  // ESSE registro decora reply.sendFile() — usado no notFoundHandler abaixo
+  // pra servir o index.html do SPA. O outro registro (exercise-images) usa
+  // decorateReply:false porque @fastify/static só permite UMA decoração.
   await app.register(fastifyStatic, {
     root: staticDir,
     prefix: '/',
     wildcard: false,
-    decorateReply: false,
   })
 
   // SPA fallback: qualquer GET que não bateu em /api ou arquivo estático,
