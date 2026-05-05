@@ -3,8 +3,12 @@ services:
     build:
       context: .
       args:
-        # Lê do server/.env (que docker-compose injeta) — o Client ID é embutido
-        # no bundle do frontend em build time pelo vite-plugin-pwa.
+        # ATENÇÃO ao deploy: ${GOOGLE_CLIENT_ID:-} é interpolado pelo compose a
+        # partir de UM .env na raiz do projeto (NÃO do server/.env do env_file).
+        # Em produção, o jeito mais simples é fazer um symlink:
+        #   ln -sf server/.env .env
+        # Sem isso, o Client ID vira string vazia, o build do frontend roda mas
+        # o GoogleSignInButton mostra 'VITE_GOOGLE_CLIENT_ID não configurado'.
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     image: gym-alcetus:latest
     container_name: gym-alcetus
