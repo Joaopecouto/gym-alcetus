@@ -122,6 +122,16 @@ try {
 // ----- plugins -----
 await app.register(fastifyCookie)
 
+// Cross-Origin-Opener-Policy: pelo default de alguns proxies (EasyPanel/CDN),
+// vinha como `same-origin`, bloqueando o postMessage do popup do Google
+// Sign-In de volta pra nossa página (callback do GIS nunca disparava).
+// `same-origin-allow-popups` mantém isolamento mas libera popups openados
+// pela própria origem chamarem postMessage de volta. Sem isso, o login
+// silenciosamente falha.
+app.addHook('onSend', async (_req, reply) => {
+  reply.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
+})
+
 app.addHook('preHandler', loadUser)
 
 // ----- routes (API) -----
