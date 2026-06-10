@@ -1,116 +1,89 @@
-# Gym Alcetus
+<h1 align="center">Gym Alcetus 🏋️</h1>
 
-Acompanhamento de treinos em web app — login com Google, dados num SQLite na sua VPS, ~50MB de RAM idle no servidor. Acessa do iPhone via Safari ("Adicionar à Tela de Início" deixa com cara de app, em PWA).
+<p align="center">
+  Aplicação web de acompanhamento de treino (PWA) com métricas, gráficos de evolução e heatmap muscular.<br>
+  <sub><i>Fitness tracking web app (PWA) with metrics, progress charts and a muscle heatmap.</i></sub>
+</p>
 
-## Stack
+<p align="center">
+  <a href="https://gym.alcetus.com"><img src="https://img.shields.io/badge/Demo-gym.alcetus.com-1F4A7D?style=flat-square&logo=googlechrome&logoColor=white" alt="Demo"></a>
+</p>
 
-### Frontend (`/src`, `/public`, `/index.html`)
-- **Vite 7** + **React 19** + **TypeScript**
-- **Tailwind CSS v4** com tokens estilo shadcn/ui
-- **Zustand** (auth + tema)
-- **React Router v7**
-- **Recharts**, **lucide-react**, **date-fns**, **react-hook-form + zod**, **@dnd-kit**
-- **vite-plugin-pwa** (Service Worker pra cache de shell)
-- Login via **Google Identity Services** (script `gsi/client`)
+<p align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white">
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white">
+  <img src="https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white">
+  <img src="https://img.shields.io/badge/Fastify-000000?style=flat-square&logo=fastify&logoColor=white">
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white">
+  <img src="https://img.shields.io/badge/Drizzle-C5F74F?style=flat-square&logo=drizzle&logoColor=black">
+  <img src="https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white">
+</p>
 
-### Backend (`/server`)
-- **Node 22** + **Fastify 5** + **TypeScript**
-- **Drizzle ORM** + **@libsql/client** (SQLite, sem build nativo)
-- **google-auth-library** (verificação de ID token)
-- **jose** (JWT de sessão em cookie httpOnly)
+---
 
-### Deploy
-- Container **Docker** único — Fastify serve API (`/api/*`) e SPA estática (resto)
-- Hospedagem: **VPS Hostinger** com nginx na frente + TLS Let's Encrypt
-- Banco SQLite num volume Docker persistido (`iron-track-data`)
+## 🇧🇷 Português
 
-## Scripts
+App de treino instalável (PWA, funciona offline). Monte treinos e planos semanais, execute sessões com cronômetro de descanso, registre cada série (peso/reps/RPE) e acompanhe sua evolução com gráficos, heatmap muscular e medidas corporais.
 
-### Frontend (raiz)
+### ✨ Funcionalidades
+- 🏋️ Treinos customizáveis (hipertrofia/força) e planos semanais
+- ⏱️ Execução de sessão com timer de descanso e log por série (peso, reps, RPE)
+- 📈 Gráficos de evolução — volume e **1RM estimado** (fórmula de Epley)
+- 🔥 Heatmap muscular e registro de medidas corporais
+- 📚 Catálogo com **100+ exercícios** + criação de exercícios próprios
+- 🔐 Login com Google · 📱 PWA com suporte offline
+
+### 🛠️ Stack
+- **Front-end:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query, React Hook Form + Zod, Recharts, dnd-kit, PWA (Workbox)
+- **Back-end:** Node.js, Fastify 5, SQLite (libSQL), Drizzle ORM, login Google + JWT (jose)
+- **Infra:** Docker, Nginx
+
+### ▶️ Como rodar
 ```bash
-npm run dev       # vite dev server em http://localhost:5173
-npm run build     # typecheck + build em ./dist
-npm run preview   # serve o build local
-npm run lint      # ESLint
-```
-
-### Backend (`/server`)
-```bash
-cd server
-npm run dev          # tsx watch (hot reload)
-npm run build        # tsc → ./dist
-npm start            # node dist/index.js (precisa env vars)
-npm run db:generate  # drizzle-kit gera migration nova a partir do schema
-npm run db:migrate   # aplica migrations no SQLite local
-npm run db:seed      # roda seed de muscle_groups + exercises (manual; auto-seed também acontece no boot se a tabela tiver vazia)
-```
-
-## Dev local
-
-Você precisa de **2 terminais**:
-
-```bash
-# terminal 1 — backend
-cd server
-cp .env.example .env       # edite GOOGLE_CLIENT_ID e JWT_SECRET
+# Front-end (raiz)
 npm install
-npm run db:migrate
-npm run dev                 # http://localhost:3000
+npm run dev
 
-# terminal 2 — frontend
-echo 'VITE_GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com' > .env.local
-npm install                 # se ainda não rodou
-npm run dev                 # http://localhost:5173 (proxia /api → :3000)
+# Back-end (pasta server/)
+cd server
+npm install
+npm run db:migrate   # cria o schema do banco
+npm run db:seed      # popula o catálogo de exercícios
+npm run dev
 ```
+> Crie um arquivo `.env` em `server/` com as credenciais do Google OAuth e a URL do banco (libSQL/SQLite).
 
-Pra testar Google Sign-In em dev, adicione `http://localhost:5173` em **Authorized JavaScript origins** no Google Cloud Console.
+---
 
-## Deploy na VPS Hostinger
+## 🇺🇸 English
 
-Tudo automatizado via scripts em `/deploy`. Veja `deploy/README.md` — é literalmente copia-e-cola no terminal browser do painel da Hostinger.
+Installable workout app (PWA, works offline). Build workouts and weekly plans, run sessions with a rest timer, log every set (weight/reps/RPE) and track your progress with charts, a muscle heatmap and body measurements.
 
-Resumo:
-1. `deploy/hostinger-setup.sh` — instala Docker e firewall (1x na vida)
-2. `deploy/hostinger-app.sh` — clona repo, pede env vars, sobe `docker compose`
-3. `deploy/hostinger-tls.sh` — nginx + certbot pra HTTPS
+### ✨ Features
+- 🏋️ Customizable workouts (hypertrophy/strength) and weekly plans
+- ⏱️ Session runner with rest timer and per-set logging (weight, reps, RPE)
+- 📈 Progress charts — volume and **estimated 1RM** (Epley formula)
+- 🔥 Muscle heatmap and body-measurement tracking
+- 📚 Catalog with **100+ exercises** + custom exercise creation
+- 🔐 Google sign-in · 📱 Offline-capable PWA
 
-## Estrutura do repo
+### 🛠️ Stack
+- **Front-end:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query, React Hook Form + Zod, Recharts, dnd-kit, PWA (Workbox)
+- **Back-end:** Node.js, Fastify 5, SQLite (libSQL), Drizzle ORM, Google login + JWT (jose)
+- **Infra:** Docker, Nginx
 
+### ▶️ Getting started
+```bash
+# Front-end (root)
+npm install
+npm run dev
+
+# Back-end (server/ folder)
+cd server
+npm install
+npm run db:migrate   # create the database schema
+npm run db:seed      # seed the exercise catalog
+npm run dev
 ```
-/
-├── src/                  # frontend (Vite + React)
-│   ├── routes/           # páginas (Home, Library, Workouts, History, Progress, Login, Onboarding)
-│   ├── features/         # módulos por domínio (auth, onboarding, ...)
-│   ├── components/       # ui/, layout/, charts/
-│   ├── lib/              # api client, cn, calc-1rm, storage
-│   ├── stores/           # Zustand (user, settings)
-│   └── types.ts          # tipos compartilhados (mirror dos retornos da API)
-├── server/               # backend (Fastify + Drizzle + SQLite)
-│   ├── src/
-│   │   ├── auth/         # google ID verify + JWT session
-│   │   ├── db/           # client, schema, seed
-│   │   ├── routes/       # auth, me, catalog, workouts, sessions
-│   │   ├── config.ts
-│   │   └── index.ts      # boot Fastify + serve SPA
-│   ├── drizzle/          # migrations geradas
-│   └── data/             # SQLite mora aqui (gitignored)
-├── deploy/               # scripts pra Hostinger
-├── public/               # estáticos (favicon, manifest icons)
-├── Dockerfile            # multi-stage build
-└── docker-compose.yml
-```
-
-## Roadmap
-
-Plano completo em `~/.claude/plans/ron-track-um-app-pure-hellman.md`.
-
-| Fase | Status |
-|---|---|
-| 0. Setup (Vite, TS, Tailwind, PWA) | ✅ |
-| 1. Backend Fastify + Drizzle + SQLite + auth Google + onboarding | ✅ |
-| 2. Biblioteca de exercícios (UI completa de busca/filtros/customs) | ⏳ Próxima |
-| 3. Criador de treinos (templates ABC, Push/Pull/Legs etc.) | ⏳ |
-| 4. Execução de treino com timer de descanso | ⏳ |
-| 5. Planejamento semanal | ⏳ |
-| 6. Histórico + gráficos de evolução | ⏳ |
-| 7. Polimento (dark mode, export, medidas corporais) | ⏳ |
+> Create a `.env` file in `server/` with your Google OAuth credentials and the database URL (libSQL/SQLite).
