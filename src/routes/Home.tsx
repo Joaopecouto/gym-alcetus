@@ -35,21 +35,42 @@ export function HomeRoute() {
         .filter((s) => s.finishedAt)
         .map((s) => format(new Date(s.finishedAt!), 'yyyy-MM-dd')),
     )
+
+    // Dias da semana que são de TREINO no plano ativo (workoutId != null).
+    // O resto (descanso marcado OU dia sem nada marcado) conta como descanso e
+    // não quebra o streak. Sem plano ativo (ou plano só com descansos), cai no
+    // comportamento simples: dias treinados consecutivos.
+    const trainingDows = new Set<number>()
+    for (const d of activePlanQ.data?.days ?? []) {
+      if (d.workoutId) trainingDows.add(d.dayOfWeek)
+    }
+    const hasSchedule = trainingDows.size > 0
+    const todayKey = format(new Date(), 'yyyy-MM-dd')
+
     let streak = 0
     const cursor = new Date()
-    let checkedToday = false
-    while (true) {
+    let guard = 0
+    while (guard++ < 366) {
       const key = format(cursor, 'yyyy-MM-dd')
       if (days.has(key)) {
+        // Treinou nesse dia → conta (mesmo que fosse dia de descanso no plano).
         streak += 1
         cursor.setDate(cursor.getDate() - 1)
-      } else if (!checkedToday) {
-        checkedToday = true
+        continue
+      }
+      const isToday = key === todayKey
+      const isRestDay = hasSchedule ? !trainingDows.has(cursor.getDay()) : false
+      if (isToday || isRestDay) {
+        // Hoje ainda sem treino (graça) ou dia de descanso → não quebra, pula.
         cursor.setDate(cursor.getDate() - 1)
-      } else break
+        continue
+      }
+      // Dia de treino agendado e não feito (ou, sem plano, qualquer dia
+      // passado sem treino) → streak acabou.
+      break
     }
     return { last, streak, total: finished.length }
-  }, [sessionsQ.data])
+  }, [sessionsQ.data, activePlanQ.data])
 
   const todayWorkout = useMemo(() => {
     if (!activePlanQ.data) return null
