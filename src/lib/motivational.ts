@@ -58,6 +58,44 @@ export const CLOSERS: string[] = [
   'Hoje deu uma boa suada com o parceiro. Lá ele.',
 ]
 
+/**
+ * Frango: quando o volume total (kg movidos) foi MENOR que a última vez nesse
+ * mesmo treino. Tom cômico de "pegou leve hoje" — unissex, sem falar de
+ * magreza/gordura, só zoeira sobre a carga do dia.
+ */
+export const FRANGO_PRAISES: string[] = [
+  'Frangou hoje, hein.',
+  'Treinou fofo, mestre.',
+  'O ferro hoje nem te sentiu.',
+  'Pegou leve igual pluma.',
+  'Hoje o haltere descansou contigo.',
+  'Treino modo soninho ativado.',
+  'A barra perguntou se tu tava bem.',
+  'Modo econômico de energia, né.',
+  'Treino tamanho família, porção kids.',
+  'Hoje foi mais alongamento que treino.',
+  'Veio passear na academia hoje?',
+  'Hoje o peso ganhou de você.',
+  'Foi de boa demais, marombinha.',
+  'Treino diet: zero açúcar, zero peso.',
+  'Hoje tu cochilou no meio do treino, confessa.',
+]
+
+export const FRANGO_CLOSERS: string[] = [
+  'Amanhã volta com sede de monstro.',
+  'Foi mal pro ferro. Recupera amanhã.',
+  'Todo mundo tem dia de pluma. Bola pra frente.',
+  'Da próxima pega mais pesado, vai.',
+  'O whey ainda acredita em você.',
+  'Frango também é proteína. Bora subir.',
+  'Foi leve, mas foi. Conta como presença.',
+  'Amanhã o ferro cobra os juros.',
+  'Descanso ativo, vamos chamar assim.',
+  'Menos que da última vez, hein. Sem vacilo amanhã.',
+  'O gym anotou. Capricha no próximo.',
+  'Hoje foi de leve. Amanhã é tu e a barra.',
+]
+
 function hashString(s: string): number {
   let h = 5381
   for (let i = 0; i < s.length; i++) {
@@ -76,11 +114,22 @@ export function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-/** Combo: praise (título) + closer (subtítulo). Estável pelo seed. */
-export function pickWorkoutEndMessage(seed: string): {
+/** Combo: praise (título) + closer (subtítulo). Estável pelo seed.
+ *  `regressed`: true quando o volume foi MENOR que a última vez nesse treino —
+ *  aí entram as frases de frango. Volume igual ou maior → mensagens padrão. */
+export function pickWorkoutEndMessage(
+  seed: string,
+  regressed = false,
+): {
   praise: string
   closer: string
 } {
+  if (regressed) {
+    return {
+      praise: pickStable(FRANGO_PRAISES, seed),
+      closer: pickStable(FRANGO_CLOSERS, seed + ':closer'),
+    }
+  }
   return {
     praise: pickStable(PRAISES, seed),
     closer: pickStable(CLOSERS, seed + ':closer'),

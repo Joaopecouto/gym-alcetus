@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Clock, Trash2, Weight } from 'lucide-react'
@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
-import { useSession } from '@/features/sessions/queries'
+import { useSession, useSessions } from '@/features/sessions/queries'
 import { useWorkout } from '@/features/workouts/queries'
 import {
   useExercises,
@@ -24,10 +24,30 @@ export function SessionDetailRoute() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const sessionQ = useSession(id)
+  const sessionsQ = useSessions()
   const workoutQ = useWorkout(sessionQ.data?.workoutId)
   const exercisesQ = useExercises()
   const musclesQ = useMuscleGroups()
   const [confirmDel, setConfirmDel] = useState(false)
+
+  // Frangou? Volume total MENOR que a sessão anterior do MESMO treino.
+  // Comparação justa (mesmo treino) — leg day vs braço não geram falso frango.
+  // Sem sessão anterior do treino → não tem como frangar (primeira vez).
+  const regressed = useMemo(() => {
+    const cur = sessionQ.data
+    if (!cur) return false
+    const prev = (sessionsQ.data ?? [])
+      .filter(
+        (x) =>
+          x.workoutId === cur.workoutId &&
+          x.id !== cur.id &&
+          x.finishedAt &&
+          x.startedAt < cur.startedAt,
+      )
+      .sort((a, b) => b.startedAt - a.startedAt)[0]
+    if (!prev) return false
+    return (cur.totalVolumeKg ?? 0) < (prev.totalVolumeKg ?? 0)
+  }, [sessionQ.data, sessionsQ.data])
 
   const del = useMutation({
     mutationFn: () => api.deleteSession(id!),
@@ -88,7 +108,7 @@ export function SessionDetailRoute() {
       <div className="px-4 pt-3">
         {/* Mensagem motivacional — GRANDE, sem caixa */}
         {(() => {
-          const msg = pickWorkoutEndMessage(s.id)
+          const msg = pickWorkoutEndMessage(s.id, regressed)
           return (
             <div className="mt-2">
               <h1 className="text-3xl font-bold leading-tight tracking-tight">
