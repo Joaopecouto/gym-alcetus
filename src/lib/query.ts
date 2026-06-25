@@ -14,6 +14,7 @@ export const queryKeys = {
   user: ['user'] as const,
   muscleGroups: ['muscle-groups'] as const,
   exercises: ['exercises'] as const,
+  exerciseStats: (id: string) => ['exercise-stats', id] as const,
   workouts: ['workouts'] as const,
   workout: (id: string) => ['workout', id] as const,
   workoutTemplates: ['workout-templates'] as const,

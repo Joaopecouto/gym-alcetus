@@ -18,6 +18,20 @@ export function useExercises() {
   })
 }
 
+/** Último peso usado + recorde de carga de um exercício (histórico do usuário).
+ *  staleTime alto porque durante o treino isso não muda — a sessão atual só
+ *  vira histórico no finish. */
+export function useExerciseStats(exerciseId: string | undefined) {
+  return useQuery({
+    queryKey: exerciseId
+      ? queryKeys.exerciseStats(exerciseId)
+      : ['exercise-stats', 'none'],
+    queryFn: () => api.getExerciseStats(exerciseId!),
+    enabled: !!exerciseId,
+    staleTime: 60_000,
+  })
+}
+
 export function useToggleFavorite() {
   const qc = useQueryClient()
   return useMutation({

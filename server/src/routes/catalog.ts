@@ -60,6 +60,72 @@ export async function catalogRoutes(app: FastifyInstance) {
     },
   )
 
+  // Estatísticas de um exercício pro usuário logado: último peso usado e
+  // recorde de carga. Usado na execução de treino pra mostrar "última vez" e
+  // "recorde". Só lê de séries completas de sessões JÁ salvas — a sessão em
+  // andamento ainda não tem séries no banco (são gravadas no finish), então
+  // nunca polui o "último" com o que o usuário está digitando agora.
+  app.get(
+    '/api/exercises/:id/stats',
+    { preHandler: requireAuth },
+    async (req) => {
+      const { id } = req.params as { id: string }
+      const rows = await db
+        .select({
+          weightKg: schema.sessionSets.weightKg,
+          reps: schema.sessionSets.reps,
+          durationSeconds: schema.sessionSets.durationSeconds,
+          distanceKm: schema.sessionSets.distanceKm,
+          startedAt: schema.sessions.startedAt,
+        })
+        .from(schema.sessionSets)
+        .innerJoin(
+          schema.sessions,
+          eq(schema.sessionSets.sessionId, schema.sessions.id),
+        )
+        .where(
+          and(
+            eq(schema.sessions.userId, req.user!.id),
+            eq(schema.sessionSets.exerciseId, id),
+            eq(schema.sessionSets.completed, true),
+          ),
+        )
+
+      if (rows.length === 0) {
+        return { last: null, maxWeight: null }
+      }
+
+      // "Última vez": a série mais pesada da sessão mais recente que usou esse
+      // exercício (representa a carga de trabalho da última vez).
+      const latestStartedAt = Math.max(...rows.map((r) => r.startedAt))
+      const latestRows = rows.filter((r) => r.startedAt === latestStartedAt)
+      const lastRow = latestRows.reduce((a, b) =>
+        b.weightKg > a.weightKg ? b : a,
+      )
+      // Recorde: maior carga já registrada (desempate por mais reps).
+      const maxRow = rows.reduce((a, b) => {
+        if (b.weightKg > a.weightKg) return b
+        if (b.weightKg === a.weightKg && b.reps > a.reps) return b
+        return a
+      })
+
+      return {
+        last: {
+          weightKg: lastRow.weightKg,
+          reps: lastRow.reps,
+          durationSeconds: lastRow.durationSeconds,
+          distanceKm: lastRow.distanceKm,
+          startedAt: latestStartedAt,
+        },
+        maxWeight: {
+          weightKg: maxRow.weightKg,
+          reps: maxRow.reps,
+          startedAt: maxRow.startedAt,
+        },
+      }
+    },
+  )
+
   // Cria exercício custom
   app.post(
     '/api/exercises',

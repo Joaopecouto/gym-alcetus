@@ -220,6 +220,22 @@ export interface SessionWithSets extends Session {
   sets: SessionSet[]
 }
 
+/** Estatísticas históricas de um exercício (último uso + recorde de carga). */
+export interface ExerciseStats {
+  last: {
+    weightKg: number
+    reps: number
+    durationSeconds: number | null
+    distanceKm: number | null
+    startedAt: number
+  } | null
+  maxWeight: {
+    weightKg: number
+    reps: number
+    startedAt: number
+  } | null
+}
+
 export const MUSCLE_COLORS: Record<string, string> = {
   chest: '#dc2626',
   back: '#2563eb',

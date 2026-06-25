@@ -1,20 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Check,
   ChevronRight,
   Flag,
+  History,
   Minus,
   Plus,
   SkipForward,
+  Trophy,
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
+import { ScrollRow } from '@/components/ui/ScrollRow'
 import { useRestTimer } from '@/features/sessions/useRestTimer'
 import { ExerciseImage } from '@/features/exercises/ExerciseImage'
 import {
   useExercises,
+  useExerciseStats,
   useMuscleGroups,
 } from '@/features/exercises/queries'
 import { useWorkout } from '@/features/workouts/queries'
@@ -25,6 +29,29 @@ import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query'
 import { pickWorkoutEndMessage } from '@/lib/motivational'
 import { EQUIPMENT_LABELS, type Exercise, MUSCLE_COLORS } from '@/types'
+
+/** Marca uma série como concluída e devolve um novo array de drafts (puro).
+ *  Existe pra resolver o bug de setState assíncrono: ao concluir a ÚLTIMA
+ *  série, o finish() precisa dos drafts JÁ com a marcação — não dá pra
+ *  depender do setDrafts() ter aplicado, porque finish() roda no mesmo tick. */
+function markSetCompleted(
+  drafts: ExerciseDraft[],
+  exIdx: number,
+  setIdx: number,
+): ExerciseDraft[] {
+  return drafts.map((ex, i) =>
+    i === exIdx
+      ? {
+          ...ex,
+          sets: ex.sets.map((s, si) =>
+            si === setIdx
+              ? { ...s, completed: true, completedAt: Date.now() }
+              : s,
+          ),
+        }
+      : ex,
+  )
+}
 
 interface SetDraft {
   weightKg: string
@@ -108,6 +135,22 @@ export function SessionExecuteRoute() {
     [exercisesQ.data],
   )
 
+  // Auto-passa do descanso quando o timer zera. Dispara uma vez por período —
+  // advanceFromRest() para o timer e volta pro modo 'set', e o ref guarda
+  // contra refire enquanto remaining fica em 0. Sai do modo rest → reseta.
+  const autoAdvancedRef = useRef(false)
+  useEffect(() => {
+    if (mode !== 'rest') {
+      autoAdvancedRef.current = false
+      return
+    }
+    if (timer.active && timer.remaining <= 0 && !autoAdvancedRef.current) {
+      autoAdvancedRef.current = true
+      advanceFromRest()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, timer.active, timer.remaining])
+
   if (!workoutQ.data || !workoutId) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -178,12 +221,13 @@ export function SessionExecuteRoute() {
    *  pulamos o RestView de "treino concluído" porque o detalhe já tem essa UI
    *  bonita. Caso contrário, dispara o timer de descanso. */
   function completeAndRest() {
-    updateCurrentSet({
-      completed: true,
-      completedAt: Date.now(),
-    })
+    // Calcula os drafts atualizados de forma síncrona (não espera o setState).
+    const updated = markSetCompleted(drafts, exIdx, setIdx)
+    setDrafts(updated)
     if (isLastSetOverall()) {
-      void finish()
+      // Passa os drafts já com a última série marcada — sem isso, o finish()
+      // leria o estado velho e gravaria a última série como não concluída/vazia.
+      void finish(updated)
       return
     }
     timer.start(current.restSeconds || 0)
@@ -215,6 +259,18 @@ export function SessionExecuteRoute() {
     }
   }
 
+  /** Salta pra qualquer exercício do treino (navegação livre). Vai pra primeira
+   *  série não concluída desse exercício (ou a primeira, se todas feitas). */
+  function jumpToExercise(targetExIdx: number) {
+    if (targetExIdx < 0 || targetExIdx >= drafts.length) return
+    timer.stop()
+    const target = drafts[targetExIdx]
+    const firstIncomplete = target.sets.findIndex((s) => !s.completed)
+    setExIdx(targetExIdx)
+    setSetIdx(firstIncomplete >= 0 ? firstIncomplete : 0)
+    setMode('set')
+  }
+
   /** Pula a série atual sem marcar como completa. Avança pra próxima série
    *  (ou próximo exercício se for a última do exercício atual). Se for a
    *  última do treino inteiro, finaliza direto. */
@@ -235,7 +291,7 @@ export function SessionExecuteRoute() {
     void finish()
   }
 
-  async function finish() {
+  async function finish(draftsToSave: ExerciseDraft[] = drafts) {
     if (!id) return
     setFinishing(true)
     try {
@@ -253,7 +309,7 @@ export function SessionExecuteRoute() {
         completedAt?: number | null
       }> = []
       let totalVolume = 0
-      drafts.forEach((ex) => {
+      draftsToSave.forEach((ex) => {
         ex.sets.forEach((s, idx) => {
           const w = Number(s.weightKg) || 0
           const r = Number(s.reps) || 0
@@ -341,7 +397,7 @@ export function SessionExecuteRoute() {
             </p>
           </div>
           <button
-            onClick={finish}
+            onClick={() => finish()}
             disabled={finishing}
             className="inline-flex h-9 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground"
           >
@@ -364,6 +420,9 @@ export function SessionExecuteRoute() {
             currentExercise={currentExercise}
             currentSet={currentSet}
             setIdx={setIdx}
+            exIdx={exIdx}
+            drafts={drafts}
+            exById={exById}
             muscleName={muscle?.namePt ?? ''}
             muscleColor={muscleColor}
             equipmentLabel={
@@ -376,6 +435,7 @@ export function SessionExecuteRoute() {
             onSkipSet={skipSet}
             onSkipExercise={skipExercise}
             onJumpToSet={setSetIdx}
+            onJumpToExercise={jumpToExercise}
           />
         ) : (
           <RestView
@@ -418,6 +478,9 @@ function SetView({
   currentExercise,
   currentSet,
   setIdx,
+  exIdx,
+  drafts,
+  exById,
   muscleName,
   muscleColor,
   equipmentLabel,
@@ -427,11 +490,15 @@ function SetView({
   onSkipSet,
   onSkipExercise,
   onJumpToSet,
+  onJumpToExercise,
 }: {
   current: ExerciseDraft
   currentExercise: Exercise
   currentSet: SetDraft
   setIdx: number
+  exIdx: number
+  drafts: ExerciseDraft[]
+  exById: Map<string, Exercise>
   muscleName: string
   muscleColor: string
   equipmentLabel: string
@@ -441,11 +508,16 @@ function SetView({
   onSkipSet: () => void
   onSkipExercise: () => void
   onJumpToSet: (idx: number) => void
+  onJumpToExercise: (idx: number) => void
 }) {
   const isCardio = currentExercise.kind === 'cardio'
   const w = Number(currentSet.weightKg) || 0
   const r = Number(currentSet.reps) || 0
   const oneRm = !isCardio && w && r ? Math.round(estimate1RM(w, r)) : null
+
+  const statsQ = useExerciseStats(currentExercise.id)
+  const last = statsQ.data?.last ?? null
+  const maxWeight = statsQ.data?.maxWeight ?? null
 
   // alvo
   const target = isCardio
@@ -457,8 +529,56 @@ function SetView({
     ? !!(currentSet.durationMinutes || currentSet.distanceKm)
     : !!(currentSet.weightKg && currentSet.reps)
 
+  // Preenche a série atual com o último registro (atalho).
+  function useLast() {
+    if (!last) return
+    if (isCardio) {
+      onUpdateSet({
+        durationMinutes: last.durationSeconds
+          ? String(Math.round((last.durationSeconds / 60) * 10) / 10)
+          : '',
+        distanceKm: last.distanceKm ? String(last.distanceKm) : '',
+      })
+    } else {
+      onUpdateSet({
+        weightKg: String(last.weightKg),
+        reps: String(last.reps),
+      })
+    }
+  }
+
   return (
     <div className="px-4 pt-4">
+      {/* Navegação livre entre exercícios do treino */}
+      {drafts.length > 1 ? (
+        <ScrollRow bleed className="mb-3">
+          {drafts.map((d, i) => {
+            const ex = exById.get(d.exerciseId)
+            const allDone = d.sets.length > 0 && d.sets.every((s) => s.completed)
+            const isCurrent = i === exIdx
+            return (
+              <button
+                key={d.workoutExerciseId}
+                type="button"
+                onClick={() => onJumpToExercise(i)}
+                className={cn(
+                  'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                  isCurrent
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : allDone
+                      ? 'border-primary/30 bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-accent',
+                )}
+              >
+                <span className="tabular-nums opacity-70">{i + 1}.</span>
+                <span className="max-w-28 truncate">{ex?.name ?? '—'}</span>
+                {allDone && !isCurrent ? <Check className="size-3" /> : null}
+              </button>
+            )
+          })}
+        </ScrollRow>
+      ) : null}
+
       <ExerciseImage
         exercise={currentExercise}
         size="lg"
@@ -516,6 +636,37 @@ function SetView({
           <Plus className="size-3.5" />
         </button>
       </div>
+
+      {/* Histórico do exercício: última vez (tocável pra preencher) + recorde */}
+      {last || maxWeight ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {last ? (
+            <button
+              type="button"
+              onClick={useLast}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs hover:bg-accent"
+            >
+              <History className="size-3.5 text-muted-foreground" />
+              <span className="text-muted-foreground">Última vez:</span>
+              <span className="font-semibold tabular-nums">
+                {isCardio
+                  ? formatCardioLast(last.durationSeconds, last.distanceKm)
+                  : `${last.weightKg}kg × ${last.reps}`}
+              </span>
+              <span className="text-primary">· usar</span>
+            </button>
+          ) : null}
+          {!isCardio && maxWeight ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs">
+              <Trophy className="size-3.5 text-amber-500" />
+              <span className="text-muted-foreground">Recorde:</span>
+              <span className="font-semibold tabular-nums">
+                {maxWeight.weightKg}kg × {maxWeight.reps}
+              </span>
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* Card grande da série atual */}
       <div className="mt-4 rounded-2xl border border-border bg-card p-5">
@@ -662,6 +813,20 @@ function formatCardioTarget(
     parts.push(`${distanceKm} km`)
   }
   return parts.length > 0 ? parts.join(' · ') : 'sem alvo'
+}
+
+function formatCardioLast(
+  durationSeconds: number | null,
+  distanceKm: number | null,
+): string {
+  const parts: string[] = []
+  if (durationSeconds && durationSeconds > 0) {
+    parts.push(`${Math.round(durationSeconds / 60)} min`)
+  }
+  if (distanceKm && distanceKm > 0) {
+    parts.push(`${distanceKm} km`)
+  }
+  return parts.length > 0 ? parts.join(' · ') : '—'
 }
 
 function RestView({

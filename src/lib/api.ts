@@ -1,6 +1,7 @@
 import type {
   BodyMeasurement,
   Exercise,
+  ExerciseStats,
   MeasurementInput,
   MuscleGroup,
   OnboardingPayload,
@@ -126,6 +127,9 @@ export const api = {
   },
   deleteExercise(id: string) {
     return request<{ ok: true }>(`/api/exercises/${id}`, { method: 'DELETE' })
+  },
+  getExerciseStats(id: string): Promise<ExerciseStats> {
+    return request<ExerciseStats>(`/api/exercises/${id}/stats`)
   },
   toggleFavorite(id: string) {
     return request<{ isFavorite: boolean }>(
