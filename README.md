@@ -23,7 +23,7 @@
 
 ### Visão geral
 
-O Gym Alcetus é um app de treino instalável (PWA) com front-end em React 19 e uma API própria em Fastify 5. Você monta treinos e um plano semanal, executa a sessão série por série com cronômetro de descanso e depois acompanha a evolução em gráficos, num mapa muscular e em medidas corporais.
+O Gym Alcetus é um app de treino instalável (PWA) com front-end em React 19 e uma API própria em Fastify 5. Você monta treinos e um plano semanal, executa a sessão série por série com cronômetro de descanso e depois acompanha a evolução em gráficos, num mapa muscular e em peso corporal.
 
 Todo o dado de cada pessoa fica em um banco SQLite (libSQL), acessado com Drizzle. O login é feito pelo Google e a sessão vira um cookie com JWT. O mesmo container serve a API e o front compilado.
 
@@ -56,6 +56,8 @@ flowchart LR
 
 O login usa Google Identity Services no front. A API recebe o credential em `POST /api/auth/google`, confere a assinatura e o público do token, e recusa e-mails não verificados.
 
+<p align="center"><img src="./assets/screens/login.png" alt="Tela de login com o botão Continuar com o Google." width="92%"><br><sub>Tela de login com o botão Continuar com o Google.</sub></p>
+
 - Cria o usuário na primeira vez e atualiza e-mail e foto nas seguintes.
 - Assina um JWT HS256 com a biblioteca jose, com emissor, público e validade de 30 dias.
 - Grava o JWT em cookie httpOnly, sameSite lax, secure em produção.
@@ -66,6 +68,8 @@ O login usa Google Identity Services no front. A API recebe o credential em `POS
 
 O catálogo oficial vem de um arquivo de seed e é compartilhado por todos. Cada pessoa pode criar exercícios próprios.
 
+<p align="center"><img src="./assets/screens/library.png" alt="Biblioteca com busca, filtros por músculo e equipamento, favoritos e fotos dos exercícios." width="92%"><br><sub>Biblioteca com busca, filtros por músculo e equipamento, favoritos e fotos dos exercícios.</sub></p>
+
 - A seed atual tem 50 exercícios (6 de cardio), 13 grupos musculares e instruções em português.
 - No boot, a API aplica migrations e insere só o que falta, então novos exercícios entram sem regravar os antigos.
 - As fotos ficam em uma pasta e são ligadas ao exercício pelo nome do arquivo, que é o id do exercício.
@@ -74,6 +78,10 @@ O catálogo oficial vem de um arquivo de seed e é compartilhado por todos. Cada
 #### Treinos e plano semanal
 
 Um treino tem modo (hipertrofia ou força), cor, notas e até 40 exercícios. Cada exercício define séries, faixa de repetições, descanso e carga alvo. Cardio usa duração e distância no lugar de carga e repetições.
+
+<p align="center"><img src="./assets/screens/plan-editor.png" alt="Editor do plano: cada dia da semana aponta para um treino ou para descanso." width="92%"><br><sub>Editor do plano: cada dia da semana aponta para um treino ou para descanso.</sub></p>
+
+<p align="center"><img src="./assets/screens/workouts.png" alt="Plano da semana ativo (um treino por dia, quinta como descanso) e a lista de treinos com modo e volume estimado." width="92%"><br><sub>Plano da semana ativo (um treino por dia, quinta como descanso) e a lista de treinos com modo e volume estimado.</sub></p>
 
 - Existem 6 modelos prontos, como Push, Pull, Legs e dois treinos de força.
 - O plano tem 7 dias. Dia sem treino é descanso.
@@ -84,6 +92,10 @@ Um treino tem modo (hipertrofia ou força), cor, notas e até 40 exercícios. Ca
 #### Execução da sessão e timer de descanso
 
 A tela alterna entre modo série e modo descanso. A carga e as repetições são digitadas, e o botão de atalho preenche com o último registro.
+
+<p align="center"><img src="./assets/screens/session-rest.png" alt="Timer de descanso circular com ajuste de 15 segundos e prévia do próximo exercício." width="92%"><br><sub>Timer de descanso circular com ajuste de 15 segundos e prévia do próximo exercício.</sub></p>
+
+<p align="center"><img src="./assets/screens/session-set.jpg" alt="Série atual com carga e repetições digitadas, atalho da última vez, recorde e 1RM estimado em tempo real." width="92%"><br><sub>Série atual com carga e repetições digitadas, atalho da última vez, recorde e 1RM estimado em tempo real.</sub></p>
 
 - O 1RM estimado aparece enquanto a pessoa digita.
 - Concluir a série dispara o descanso configurado. Ele aceita ajuste de 15 segundos para mais ou menos e avança sozinho quando zera.
@@ -96,15 +108,21 @@ A tela alterna entre modo série e modo descanso. A carga e as repetições são
 
 A tela Evolução filtra por exercício ou por músculo e por período (hoje, semana com início na segunda, mês, tudo ou intervalo livre).
 
+<p align="center"><img src="./assets/screens/progress-weight.png" alt="Peso corporal com gráfico, histórico de registros e volume por grupo muscular." width="92%"><br><sub>Peso corporal com gráfico, histórico de registros e volume por grupo muscular.</sub></p>
+
+<p align="center"><img src="./assets/screens/progress-1rm.png" alt="Gráfico de 1RM estimado do supino ao longo de oito semanas, com filtros de período e métrica." width="92%"><br><sub>Gráfico de 1RM estimado do supino ao longo de oito semanas, com filtros de período e métrica.</sub></p>
+
 - Três métricas: 1RM estimado, carga máxima e volume.
 - O 1RM usa Epley: carga vezes (1 mais repetições dividido por 30). Com 1 repetição vale a própria carga, e valores zerados dão 0.
 - Gráficos de linha em Recharts, com ponto por sessão.
 - Um painel mostra a distribuição de volume por músculo.
-- Peso corporal e medidas (gordura, peito, cintura, braços, coxas, panturrilhas) têm tela própria, e o peso novo atualiza o perfil.
+- O peso corporal tem tela própria, com gráfico e histórico, e o peso novo atualiza o perfil.
 
 #### Mapa muscular
 
 Dois bonecos em SVG (frente e costas) pintam os músculos trabalhados na sessão.
+
+<p align="center"><img src="./assets/screens/muscle-map.png" alt="Bonecos de frente e costas pintando os músculos trabalhados em uma sessão de Push." width="92%"><br><sub>Bonecos de frente e costas pintando os músculos trabalhados em uma sessão de Push.</sub></p>
 
 - Série no músculo principal vale 1,0 e no secundário vale 0,5.
 - A soma é normalizada pelo músculo mais exigido.
@@ -171,7 +189,7 @@ Crie um arquivo `.env` em `server/` com as credenciais do Google OAuth e a URL d
 
 ### Overview
 
-Gym Alcetus is an installable workout app (PWA) with a React 19 front end and its own Fastify 5 API. You build workouts and a weekly plan, run each session set by set with a rest timer, and then follow your progress in charts, a muscle map and body measurements.
+Gym Alcetus is an installable workout app (PWA) with a React 19 front end and its own Fastify 5 API. You build workouts and a weekly plan, run each session set by set with a rest timer, and then follow your progress in charts, a muscle map and body weight.
 
 Each person's data lives in a SQLite (libSQL) database accessed through Drizzle. Sign-in goes through Google and the session becomes a JWT cookie. One container serves both the API and the built front end.
 
@@ -204,6 +222,8 @@ flowchart LR
 
 Sign-in uses Google Identity Services on the front end. The API receives the credential at `POST /api/auth/google`, checks the token signature and audience, and rejects unverified emails.
 
+<p align="center"><img src="./assets/screens/login.png" alt="Login screen with the Continue with Google button." width="92%"><br><sub>Login screen with the Continue with Google button.</sub></p>
+
 - It creates the user the first time and updates email and picture afterwards.
 - It signs an HS256 JWT with the jose library, with issuer, audience and a 30-day lifetime.
 - The JWT goes into an httpOnly, sameSite lax cookie, secure in production.
@@ -214,6 +234,8 @@ Sign-in uses Google Identity Services on the front end. The API receives the cre
 
 The official catalog comes from a seed file and is shared by everyone. Each person can create their own exercises.
 
+<p align="center"><img src="./assets/screens/library.png" alt="Exercise library with search, muscle and equipment filters, favorites and exercise photos." width="92%"><br><sub>Exercise library with search, muscle and equipment filters, favorites and exercise photos.</sub></p>
+
 - The current seed has 50 exercises (6 of them cardio), 13 muscle groups and instructions in Portuguese.
 - On boot, the API runs migrations and inserts only what is missing, so new exercises arrive without rewriting old ones.
 - Photos sit in a folder and are linked to the exercise by file name, which is the exercise id.
@@ -222,6 +244,10 @@ The official catalog comes from a seed file and is shared by everyone. Each pers
 #### Workouts and weekly plan
 
 A workout has a mode (hypertrophy or strength), a color, notes and up to 40 exercises. Each exercise sets the number of sets, a rep range, rest and a target load. Cardio uses duration and distance instead of load and reps.
+
+<p align="center"><img src="./assets/screens/plan-editor.png" alt="Plan editor: each weekday points to a workout or to a rest day." width="92%"><br><sub>Plan editor: each weekday points to a workout or to a rest day.</sub></p>
+
+<p align="center"><img src="./assets/screens/workouts.png" alt="Active weekly plan (one workout per day, Thursday as rest) and the workout list with mode and estimated volume." width="92%"><br><sub>Active weekly plan (one workout per day, Thursday as rest) and the workout list with mode and estimated volume.</sub></p>
 
 - There are 6 ready-made templates, such as Push, Pull, Legs and two strength days.
 - The plan has 7 days. A day without a workout is a rest day.
@@ -232,6 +258,10 @@ A workout has a mode (hypertrophy or strength), a color, notes and up to 40 exer
 #### Session runner and rest timer
 
 The screen alternates between set mode and rest mode. Load and reps are typed in, and a shortcut button fills them from the last record.
+
+<p align="center"><img src="./assets/screens/session-rest.png" alt="Circular rest timer with 15-second adjustment and a preview of the next exercise." width="92%"><br><sub>Circular rest timer with 15-second adjustment and a preview of the next exercise.</sub></p>
+
+<p align="center"><img src="./assets/screens/session-set.jpg" alt="Current set with typed weight and reps, last-time shortcut, record and live estimated 1RM." width="92%"><br><sub>Current set with typed weight and reps, last-time shortcut, record and live estimated 1RM.</sub></p>
 
 - The estimated 1RM shows up while the user types.
 - Completing a set triggers the configured rest. It can be adjusted by 15 seconds either way and advances on its own at zero.
@@ -244,15 +274,21 @@ The screen alternates between set mode and rest mode. Load and reps are typed in
 
 The Progress screen filters by exercise or by muscle and by period (today, week starting Monday, month, all, or a custom range).
 
+<p align="center"><img src="./assets/screens/progress-weight.png" alt="Body weight chart, entry history and volume per muscle group." width="92%"><br><sub>Body weight chart, entry history and volume per muscle group.</sub></p>
+
+<p align="center"><img src="./assets/screens/progress-1rm.png" alt="Estimated 1RM chart for the bench press over eight weeks, with period and metric filters." width="92%"><br><sub>Estimated 1RM chart for the bench press over eight weeks, with period and metric filters.</sub></p>
+
 - Three metrics: estimated 1RM, max load and volume.
 - 1RM uses Epley: load times (1 plus reps divided by 30). With 1 rep it equals the load itself, and zero inputs give 0.
 - Line charts in Recharts, one point per session.
 - A panel shows the volume distribution by muscle.
-- Body weight and measurements (body fat, chest, waist, arms, thighs, calves) have their own screen, and a new weight updates the profile.
+- Body weight has its own screen, with a chart and history, and a new weight updates the profile.
 
 #### Muscle map
 
 Two SVG figures (front and back) paint the muscles worked in the session.
+
+<p align="center"><img src="./assets/screens/muscle-map.png" alt="Front and back figures highlighting the muscles worked in a Push session." width="92%"><br><sub>Front and back figures highlighting the muscles worked in a Push session.</sub></p>
 
 - A set on the primary muscle counts 1.0 and on a secondary muscle counts 0.5.
 - The sum is normalized by the most worked muscle.
