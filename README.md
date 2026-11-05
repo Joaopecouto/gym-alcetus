@@ -1,45 +1,34 @@
-<h1 align="center">Gym Alcetus 🏋️</h1>
+<h1 align="center">Gym Alcetus</h1>
+
+<p align="center">App web de acompanhamento de treino (PWA) com métricas, gráficos de evolução e heatmap muscular.<br><sub><i>Fitness tracking web app (PWA) with metrics, progress charts and a muscle heatmap.</i></sub></p>
 
 <p align="center">
-  Aplicação web de acompanhamento de treino (PWA) com métricas, gráficos de evolução e heatmap muscular.<br>
-  <sub><i>Fitness tracking web app (PWA) with metrics, progress charts and a muscle heatmap.</i></sub>
+  <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/react.svg" height="15" alt=""> React</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/typescript.svg" height="15" alt=""> TypeScript</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/vite.svg" height="15" alt=""> Vite</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/tailwindcss.svg" height="15" alt=""> Tailwind CSS</kbd> <kbd>Zustand</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/reactquery.svg" height="15" alt=""> TanStack Query</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/zod.svg" height="15" alt=""> Zod</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/pwa.svg" height="15" alt=""> PWA</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/fastify.svg" height="15" alt=""> Fastify</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/sqlite.svg" height="15" alt=""> SQLite</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/drizzle.svg" height="15" alt=""> Drizzle ORM</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/docker.svg" height="15" alt=""> Docker</kbd> <kbd><img src="https://raw.githubusercontent.com/Joaopecouto/Joaopecouto/main/assets/icons/nginx.svg" height="15" alt=""> Nginx</kbd>
 </p>
 
-<p align="center">
-  <a href="https://gym.alcetus.com"><img src="https://img.shields.io/badge/Demo-gym.alcetus.com-1F4A7D?style=flat-square&logo=googlechrome&logoColor=white" alt="Demo"></a>
-</p>
+Demo: [gym.alcetus.com](https://gym.alcetus.com)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB">
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white">
-  <img src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white">
-  <img src="https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white">
-  <img src="https://img.shields.io/badge/Fastify-000000?style=flat-square&logo=fastify&logoColor=white">
-  <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white">
-  <img src="https://img.shields.io/badge/Drizzle-C5F74F?style=flat-square&logo=drizzle&logoColor=black">
-  <img src="https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white">
-</p>
+## Português
 
----
+App de treino instalável (PWA, funciona offline). Monte treinos e planos semanais, execute sessões com cronômetro de descanso, registre cada série (peso, repetições e RPE) e acompanhe a evolução com gráficos, heatmap muscular e medidas corporais.
 
-## 🇧🇷 Português
+### Funcionalidades
 
-App de treino instalável (PWA, funciona offline). Monte treinos e planos semanais, execute sessões com cronômetro de descanso, registre cada série (peso/reps/RPE) e acompanhe sua evolução com gráficos, heatmap muscular e medidas corporais.
+- Treinos customizáveis (hipertrofia e força) e planos semanais.
+- Execução de sessão com timer de descanso e registro por série (peso, repetições e RPE).
+- Gráficos de evolução: volume e **1RM estimado** (fórmula de Epley).
+- Heatmap muscular e registro de medidas corporais.
+- Catálogo com **mais de 100 exercícios** e criação de exercícios próprios.
+- Login com Google e PWA com suporte offline.
 
-### ✨ Funcionalidades
-- 🏋️ Treinos customizáveis (hipertrofia/força) e planos semanais
-- ⏱️ Execução de sessão com timer de descanso e log por série (peso, reps, RPE)
-- 📈 Gráficos de evolução — volume e **1RM estimado** (fórmula de Epley)
-- 🔥 Heatmap muscular e registro de medidas corporais
-- 📚 Catálogo com **100+ exercícios** + criação de exercícios próprios
-- 🔐 Login com Google · 📱 PWA com suporte offline
+### Stack
 
-### 🛠️ Stack
-- **Front-end:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query, React Hook Form + Zod, Recharts, dnd-kit, PWA (Workbox)
-- **Back-end:** Node.js, Fastify 5, SQLite (libSQL), Drizzle ORM, login Google + JWT (jose)
-- **Infra:** Docker, Nginx
+- **Front-end:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query, React Hook Form e Zod, Recharts, dnd-kit e PWA (Workbox).
+- **Back-end:** Node.js, Fastify 5, SQLite (libSQL), Drizzle ORM, login Google e JWT (jose).
+- **Infra:** Docker e Nginx.
 
-### ▶️ Como rodar
+### Como rodar
+
 ```bash
 # Front-end (raiz)
 npm install
@@ -52,28 +41,30 @@ npm run db:migrate   # cria o schema do banco
 npm run db:seed      # popula o catálogo de exercícios
 npm run dev
 ```
-> Crie um arquivo `.env` em `server/` com as credenciais do Google OAuth e a URL do banco (libSQL/SQLite).
 
----
+Crie um arquivo `.env` em `server/` com as credenciais do Google OAuth e a URL do banco (libSQL/SQLite).
 
-## 🇺🇸 English
+## English
 
-Installable workout app (PWA, works offline). Build workouts and weekly plans, run sessions with a rest timer, log every set (weight/reps/RPE) and track your progress with charts, a muscle heatmap and body measurements.
+Installable workout app (PWA, works offline). Build workouts and weekly plans, run sessions with a rest timer, log every set (weight, reps and RPE) and track progress with charts, a muscle heatmap and body measurements.
 
-### ✨ Features
-- 🏋️ Customizable workouts (hypertrophy/strength) and weekly plans
-- ⏱️ Session runner with rest timer and per-set logging (weight, reps, RPE)
-- 📈 Progress charts — volume and **estimated 1RM** (Epley formula)
-- 🔥 Muscle heatmap and body-measurement tracking
-- 📚 Catalog with **100+ exercises** + custom exercise creation
-- 🔐 Google sign-in · 📱 Offline-capable PWA
+### Features
 
-### 🛠️ Stack
-- **Front-end:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query, React Hook Form + Zod, Recharts, dnd-kit, PWA (Workbox)
-- **Back-end:** Node.js, Fastify 5, SQLite (libSQL), Drizzle ORM, Google login + JWT (jose)
-- **Infra:** Docker, Nginx
+- Customizable workouts (hypertrophy and strength) and weekly plans.
+- Session runner with a rest timer and per-set logging (weight, reps and RPE).
+- Progress charts: volume and **estimated 1RM** (Epley formula).
+- Muscle heatmap and body-measurement tracking.
+- Catalog with **100+ exercises** and custom exercise creation.
+- Google sign-in and an offline-capable PWA.
 
-### ▶️ Getting started
+### Stack
+
+- **Front-end:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query, React Hook Form and Zod, Recharts, dnd-kit and PWA (Workbox).
+- **Back-end:** Node.js, Fastify 5, SQLite (libSQL), Drizzle ORM, Google login and JWT (jose).
+- **Infra:** Docker and Nginx.
+
+### Getting started
+
 ```bash
 # Front-end (root)
 npm install
@@ -86,4 +77,7 @@ npm run db:migrate   # create the database schema
 npm run db:seed      # seed the exercise catalog
 npm run dev
 ```
-> Create a `.env` file in `server/` with your Google OAuth credentials and the database URL (libSQL/SQLite).
+
+Create a `.env` file in `server/` with your Google OAuth credentials and the database URL (libSQL/SQLite).
+
+<sub>Contato · Contact: <a href="https://joaocouto.alcetus.com">joaocouto.alcetus.com</a> · <a href="mailto:joaopecouto77@gmail.com">joaopecouto77@gmail.com</a></sub>
