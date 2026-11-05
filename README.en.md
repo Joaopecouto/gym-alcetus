@@ -109,9 +109,9 @@ The Progress screen filters by exercise or by muscle and by period (today, week 
 
 <p align="center"><img src="./assets/screens/progress-1rm.png" alt="Estimated 1RM chart for the bench press over eight weeks, with period and metric filters." width="92%"><br><sub>Estimated 1RM chart for the bench press over eight weeks, with period and metric filters.</sub></p>
 
-- Three metrics: estimated 1RM, max load and volume.
+- The screen offers three metrics: estimated 1RM, max load and volume.
 - 1RM uses Epley: load times (1 plus reps divided by 30). With 1 rep it equals the load itself, and zero inputs give 0.
-- Line charts in Recharts, one point per session.
+- The line charts use Recharts, with one point per session.
 - A panel shows the volume distribution by muscle.
 - Body weight has its own screen, with a chart and history, and a new weight updates the profile.
 
@@ -141,9 +141,9 @@ flowchart TB
   API --> G[Google ID token]
 ```
 
-- Front end: React 19, TypeScript, Vite, Tailwind, Zustand, TanStack Query, React Hook Form with Zod, Recharts and a Workbox PWA.
-- Back end: Fastify 5, libSQL, Drizzle with 3 migrations, jose, google-auth-library and Zod on the routes.
-- Infra: a 3-stage Dockerfile (front end, server, final Node 22 Alpine image running as an unprivileged user), compose with a data volume and a healthcheck, and Nginx with TLS, HSTS and long caching on assets.
+- The front end uses React 19, TypeScript, Vite, Tailwind, Zustand, TanStack Query, React Hook Form with Zod, Recharts and a Workbox PWA.
+- The back end uses Fastify 5, libSQL, Drizzle with 3 migrations, jose, google-auth-library and Zod on the routes.
+- The infra has a 3-stage Dockerfile (front end, server, final Node 22 Alpine image running as an unprivileged user), a compose file with a data volume and a healthcheck, and Nginx with TLS, HSTS and long caching on assets.
 
 ### Engineering decisions
 

@@ -109,9 +109,9 @@ A tela Evolução filtra por exercício ou por músculo e por período (hoje, se
 
 <p align="center"><img src="./assets/screens/progress-1rm.png" alt="Gráfico de 1RM estimado do supino ao longo de oito semanas, com filtros de período e métrica." width="92%"><br><sub>Gráfico de 1RM estimado do supino ao longo de oito semanas, com filtros de período e métrica.</sub></p>
 
-- Três métricas: 1RM estimado, carga máxima e volume.
+- A tela oferece três métricas: 1RM estimado, carga máxima e volume.
 - O 1RM usa Epley: carga vezes (1 mais repetições dividido por 30). Com 1 repetição vale a própria carga, e valores zerados dão 0.
-- Gráficos de linha em Recharts, com ponto por sessão.
+- Os gráficos de linha usam Recharts, com um ponto por sessão.
 - Um painel mostra a distribuição de volume por músculo.
 - O peso corporal tem tela própria, com gráfico e histórico, e o peso novo atualiza o perfil.
 
@@ -141,9 +141,9 @@ flowchart TB
   API --> G[Google ID token]
 ```
 
-- Front: React 19, TypeScript, Vite, Tailwind, Zustand, TanStack Query, React Hook Form com Zod, Recharts e PWA com Workbox.
-- Back: Fastify 5, libSQL, Drizzle com 3 migrations, jose, google-auth-library e Zod nas rotas.
-- Infra: Dockerfile em 3 estágios (front, servidor, imagem final em Node 22 Alpine, usuário sem privilégio), compose com volume de dados e healthcheck, e Nginx com TLS, HSTS e cache longo nos assets.
+- O front usa React 19, TypeScript, Vite, Tailwind, Zustand, TanStack Query, React Hook Form com Zod, Recharts e PWA com Workbox.
+- O back usa Fastify 5, libSQL, Drizzle com 3 migrations, jose, google-auth-library e Zod nas rotas.
+- A infra tem um Dockerfile em 3 estágios (front, servidor, imagem final em Node 22 Alpine, usuário sem privilégio), um compose com volume de dados e healthcheck, e o Nginx com TLS, HSTS e cache longo nos assets.
 
 ### Decisões de engenharia
 
