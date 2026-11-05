@@ -20,9 +20,9 @@
 
 ### Visão geral
 
-O Gym Alcetus é um app de treino instalável (PWA) com front-end em React 19 e uma API própria em Fastify 5. Você monta treinos e um plano semanal, executa a sessão série por série com cronômetro de descanso e depois acompanha a evolução em gráficos, num mapa muscular e em peso corporal.
+O Gym Alcetus é um app de treino instalável (PWA) com front-end em React 19 e uma API própria em Fastify 5. Você monta seus treinos e um plano semanal, executa a sessão série por série com um cronômetro de descanso e depois acompanha a evolução em gráficos, num mapa muscular e em peso corporal.
 
-Todo o dado de cada pessoa fica em um banco SQLite (libSQL), acessado com Drizzle. O login é feito pelo Google e a sessão vira um cookie com JWT. O mesmo container serve a API e o front compilado.
+Todo o dado de cada pessoa fica em um banco SQLite (libSQL), acessado com Drizzle. O login é feito pelo Google e a sessão vira um cookie com JWT. O mesmo container serve tanto a API quanto o front compilado.
 
 ### Como funciona
 

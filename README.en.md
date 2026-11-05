@@ -20,9 +20,9 @@
 
 ### Overview
 
-Gym Alcetus is an installable workout app (PWA) with a React 19 front end and its own Fastify 5 API. You build workouts and a weekly plan, run each session set by set with a rest timer, and then follow your progress in charts, a muscle map and body weight.
+Gym Alcetus is an installable workout app (PWA) with a React 19 front end and its own Fastify 5 API. You build your workouts and a weekly plan, run each session set by set with a rest timer, and then follow your progress in charts, a muscle map and body weight.
 
-Each person's data lives in a SQLite (libSQL) database accessed through Drizzle. Sign-in goes through Google and the session becomes a JWT cookie. One container serves both the API and the built front end.
+Each person's data lives in a SQLite (libSQL) database accessed through Drizzle. Sign-in just goes through Google, and the session becomes a JWT cookie. One container serves both the API and the built front end.
 
 ### How it works
 
